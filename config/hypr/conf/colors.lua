@@ -1,0 +1,15 @@
+return {
+    black  = "060709",
+    ink    = "141a22",
+    slate  = "2c3748",
+    deep   = "394557",
+    steel  = "535c69",
+    dusk   = "6b7587",
+    haze   = "7b8493",
+    pale   = "999fa1",
+    cyan   = "8fa4ad",
+    olive  = "969173",
+    sand   = "d4cba6",
+    cream  = "e7e6cf",
+    red    = "a4696a",
+}

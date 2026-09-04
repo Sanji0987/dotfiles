@@ -1,0 +1,18 @@
+[Unit]
+Description=Walker application launcher (gapplication service)
+Documentation=https://github.com/abenz1267/walker
+After=graphical-session.target elephant.service
+Wants=elephant.service
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+# Walker parses its theme CSS once at service start. After a theme change,
+# omarchy-walker-theme-sync restarts this unit's process so the new colors
+# take effect.
+ExecStart=/usr/bin/walker --gapplication-service
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target

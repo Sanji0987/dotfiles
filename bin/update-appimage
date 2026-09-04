@@ -1,0 +1,172 @@
+#!/usr/bin/env bash
+# Fetch the latest AppImage for an app and install it into ~/.local/bin under a
+# clean, unversioned name, then point its .desktop entry at the new file.
+#
+# Usage:
+#   update-appimage                    # source + target from config file
+#   update-appimage -u gh:owner/repo
+#   update-appimage -u https://.../Foo.AppImage -t ~/.local/bin/foo
+#   update-appimage -n                 # dry run: resolve and report only
+#
+# Config file (default ~/appimage_update_script), blank/# lines ignored:
+#   line 1: source  -- an https URL, or gh:owner/repo[ glob] for repos whose
+#                      release assets carry a version in the filename
+#   line 2: target path        (optional; derived from the asset name if absent)
+#   line 3: .desktop file name (optional; auto-detected if absent)
+
+set -euo pipefail
+
+CONFIG="${APPIMAGE_CONFIG:-$HOME/appimage_update_script}"
+SOURCE=""; TARGET=""; DESKTOP=""; DRYRUN=0
+
+die() { printf '%s: %s\n' "${0##*/}" "$*" >&2; exit 1; }
+log() { printf '==> %s\n' "$*"; }
+
+# Everything this script touches lives under the invoking user's home. When run
+# through sudo, $HOME may point at /root and any file created would end up
+# root-owned, so resolve the real user and drop ownership back to them at the end.
+RUN_USER=${SUDO_USER:-$(id -un)}
+RUN_HOME=$(getent passwd "$RUN_USER" | cut -d: -f6)
+[[ -n $RUN_HOME ]] || die "could not resolve home directory for user '$RUN_USER'"
+HOME=$RUN_HOME
+reown() { [[ -n ${SUDO_USER:-} ]] && chown "$RUN_USER:$(id -gn "$RUN_USER")" "$@" 2>/dev/null || true; }
+
+while getopts ':u:t:d:c:nh' opt; do
+  case "$opt" in
+    u) SOURCE=$OPTARG ;;
+    t) TARGET=$OPTARG ;;
+    d) DESKTOP=$OPTARG ;;
+    c) CONFIG=$OPTARG ;;
+    n) DRYRUN=1 ;;
+    h) sed -n '2,18p' "$0"; exit 0 ;;
+    :) die "option -$OPTARG requires an argument" ;;
+    *) die "unknown option -$OPTARG (try -h)" ;;
+  esac
+done
+
+if [[ -r $CONFIG ]]; then
+  mapfile -t cfg < <(grep -v '^[[:space:]]*\(#\|$\)' "$CONFIG" || true)
+  [[ -z $SOURCE  && -n ${cfg[0]:-} ]] && SOURCE=${cfg[0]}
+  [[ -z $TARGET  && -n ${cfg[1]:-} ]] && TARGET=${cfg[1]}
+  [[ -z $DESKTOP && -n ${cfg[2]:-} ]] && DESKTOP=${cfg[2]}
+fi
+[[ -n $SOURCE ]] || die "no source given and none found in $CONFIG"
+
+# --- resolve the source to a concrete download URL + asset filename ----------
+if [[ $SOURCE == gh:* ]]; then
+  read -r repo glob <<<"${SOURCE#gh:}"
+  : "${glob:=*.AppImage}"
+  log "querying latest release of $repo ..."
+  api=$(curl -fsSL -H 'Accept: application/vnd.github+json' \
+        "https://api.github.com/repos/$repo/releases/latest") \
+    || die "GitHub API request failed for $repo"
+  # Pick the newest release's first asset matching the glob.
+  url=""
+  while IFS= read -r a; do
+    case "$a" in $glob) url=$a; break ;; esac
+  done < <(grep -o '"browser_download_url": *"[^"]*"' <<<"$api" | cut -d'"' -f4)
+  [[ -n $url ]] || die "no release asset matching '$glob' in $repo"
+  URL=$url
+else
+  URL=$SOURCE
+fi
+[[ $URL == https://* ]] || die "refusing non-https URL: $URL"
+asset=${URL##*/}; asset=${asset%%\?*}
+
+# --- derive the installed name: drop the suffix, version and platform tokens -
+if [[ -z $TARGET ]]; then
+  name=${asset%.[Aa]pp[Ii]mage}
+  name=$(sed -E 's/[-_.]?(linux|Linux|x86[-_]64|amd64|x64|i[36]86|aarch64|arm64|static)//g; s/[-_.]v?[0-9]+(\.[0-9]+)*$//' <<<"$name")
+  [[ -n $name ]] || die "could not derive a name from asset '$asset'"
+  TARGET="$HOME/.local/bin/$name"
+fi
+TARGET="${TARGET/#\~/$HOME}"
+
+dest_dir=$(dirname "$TARGET")
+[[ -d $dest_dir && -w $dest_dir ]] || die "target directory missing or not writable: $dest_dir"
+[[ -e $TARGET && ! -f $TARGET ]] && die "target exists but is not a regular file: $TARGET"
+
+log "asset:   $asset"
+log "target:  $TARGET"
+(( DRYRUN )) && { log "dry run, stopping before download"; exit 0; }
+
+# --- download ---------------------------------------------------------------
+# Staged in the destination directory so the final move is atomic (same fs).
+tmp=$(mktemp "$dest_dir/.${TARGET##*/}.new.XXXXXX")
+trap 'rm -f "$tmp"' EXIT
+
+log "downloading ..."
+curl -fL --retry 3 --retry-delay 2 --progress-bar -o "$tmp" "$URL" || die "download failed"
+
+# AppImages are ELF binaries; this catches an HTML error page being saved over
+# a working install.
+read -r -n 4 -d '' magic < "$tmp" || true
+[[ $magic == $'\x7f'ELF ]] || die "downloaded file is not an ELF binary ($(file -b "$tmp" 2>/dev/null))"
+(( $(stat -c %s "$tmp") > 1048576 )) || die "downloaded file is suspiciously small"
+
+if [[ -f $TARGET ]] && cmp -s "$tmp" "$TARGET"; then
+  log "already up to date -- nothing to do"
+  exit 0
+fi
+
+if [[ -f $TARGET ]]; then
+  cp -p "$TARGET" "$TARGET.bak"
+  log "previous version kept at $TARGET.bak"
+fi
+
+mv -f "$tmp" "$TARGET"
+trap - EXIT
+chmod +x "$TARGET"
+reown "$TARGET"
+[[ -f $TARGET.bak ]] && reown "$TARGET.bak"
+log "installed $(du -h "$TARGET" | cut -f1) -> $TARGET ($(stat -c %A "$TARGET"))"
+
+# --- point the .desktop entry at the new path -------------------------------
+apps="$HOME/.local/share/applications"
+appname=${TARGET##*/}
+
+# Locate an entry to update: the configured one, else any entry whose Exec
+# already mentions this app. User-level entries win over system ones, and a
+# system entry is copied into $apps (which shadows it) rather than edited.
+src_desktop=""
+if [[ -n $DESKTOP ]]; then
+  for d in "$apps/$DESKTOP" "/usr/share/applications/$DESKTOP"; do
+    [[ -f $d ]] && { src_desktop=$d; break; }
+  done
+  [[ -n $src_desktop ]] || die "no such .desktop file: $DESKTOP"
+else
+  for dir in "$apps" /usr/share/applications; do
+    [[ -d $dir ]] || continue
+    src_desktop=$(grep -ilm1 "^Exec=.*$appname" "$dir"/*.desktop 2>/dev/null | head -1) || true
+    [[ -n $src_desktop ]] && break
+  done
+fi
+
+if [[ -z $src_desktop ]]; then
+  log "no .desktop entry found for '$appname' -- skipping (pass -d NAME to set one)"
+  exit 0
+fi
+
+mkdir -p "$apps"
+out="$apps/${src_desktop##*/}"
+[[ -f $out ]] && cp -p "$out" "$out.bak"
+
+# Rewrite Exec= to the new path, preserving any trailing field codes (%U, %F).
+awk -v target="$TARGET" '
+  /^Exec=/ {
+    args = ""
+    if (match($0, /[ \t]+%[a-zA-Z][ \t]*$/)) args = " " substr($0, RSTART+1)
+    gsub(/[ \t]+$/, "", args)
+    print "Exec=" target (args == "" ? "" : args)
+    next
+  }
+  { print }
+' "$src_desktop" > "$out.tmp" && mv -f "$out.tmp" "$out"
+chmod 644 "$out"
+reown "$out"
+[[ -f $out.bak ]] && reown "$out.bak"
+
+log "desktop entry updated: $out"
+grep '^Exec=' "$out" | sed 's/^/    /'
+
+command -v update-desktop-database >/dev/null && update-desktop-database "$apps" 2>/dev/null || true

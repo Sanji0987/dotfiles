@@ -1,0 +1,20 @@
+# personal scratch notes, not part of the config
+*.local.md
+local/
+
+# backups
+*.bak
+*.bak.*
+*.pre-dotfiles
+
+# machine state, not config
+config/fish/fish_variables
+omarchy-shell/state/
+
+# generated on every theme change (stage-2 render output)
+config/walker/themes/omarchy/style.css
+
+# third-party theme clones + wallpapers — installed once via
+# `omarchy-shell-update --theme <git-url>`, see omarchy-shell/NOTES.md
+config/omarchy/themes/
+config/omarchy/backgrounds/

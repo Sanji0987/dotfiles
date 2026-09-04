@@ -1,0 +1,8 @@
+require("conf.display")
+require("conf.peripherals")
+require("conf.theme")
+require("conf.animations")
+require("conf.layouts")
+require("conf.rules")
+require("conf.keybinds")
+require("conf.autostart")

@@ -1,0 +1,41 @@
+# ~/.config/mako/config
+# theme: linus.png (dusk river)
+
+font=JetBrainsMono Nerd Font 10
+background-color=#060709f0
+text-color=#c3c8ca
+border-color=#000000ff
+progress-color=over #2c3748
+
+border-size=1
+border-radius=0
+padding=10,14
+margin=6
+width=380
+height=140
+icon-location=left
+max-icon-size=40
+
+default-timeout=5000
+ignore-timeout=0
+layer=overlay
+anchor=top-right
+outer-margin=6
+max-visible=5
+group-by=app-name
+
+[urgency=low]
+text-color=#999fa1
+border-color=#000000ff
+default-timeout=3000
+
+[urgency=normal]
+border-color=#000000ff
+
+[urgency=critical]
+text-color=#e7e6cf
+border-color=#a4696aff
+default-timeout=0
+
+[mode=do-not-disturb]
+invisible=1

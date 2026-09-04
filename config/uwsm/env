@@ -1,0 +1,2 @@
+export WGPU_BACKEND=vulkan
+export WGPU_POWER_PREF=high

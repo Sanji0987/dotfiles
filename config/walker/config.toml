@@ -1,0 +1,129 @@
+# Walker — Omarchy-matched configuration.
+#
+# Theming: theme = "omarchy" below resolves to
+#   ~/.config/walker/themes/omarchy/style.css
+# which is a REGULAR FILE, copied there by ~/.local/bin/omarchy-walker-theme-sync.
+# It must NOT be a symlink: walker silently ignores a symlinked
+# themes/<name>/style.css and falls back to the default theme with no warning.
+#
+# The source is ~/.config/omarchy/themed/walker.css.tpl, rendered in two stages
+# — colours by omarchy's template engine on every theme change, then geometry
+# (radii, font sizes, padding) by the sync script, which reads the same
+# shell.toml [font]/[spacing] tokens and decoration:rounding that the shell's
+# own menu does. See the template's header for the full pipeline.
+#
+# Custom themes inherit the default theme, so this dir needs only style.css;
+# layout.xml / item*.xml fall back to /etc/xdg/walker/themes/default/ and keep
+# tracking walker upstream.
+#
+# Only overrides live here. /etc/xdg/walker/config.toml is the documented
+# reference for every available key and the full [providers.actions] defaults.
+
+theme = "omarchy"
+
+close_when_open = true          # second keypress dismisses instead of stacking
+click_to_close = true
+single_click_activation = true
+selection_wrap = false
+exact_search_prefix = "'"
+keybind_symbols = true
+page_jump_items = 10
+
+# The omarchy-shell menu has neither a keybind footer nor F1-F4 badges; hiding
+# these is what makes walker read as the same surface. The CSS for both is kept
+# in walker.css.tpl, so unhiding is a one-line revert here.
+hide_action_hints = true
+hide_quick_activation = true
+
+# Omarchy's Hyprland setup does not implement ext-background-effect-v1, so
+# leaving this on would cost a protocol round-trip for nothing.
+ext_background_effect_blur = false
+
+[shell]
+# Overlay layer so Walker floats above the omarchy-shell bar rather than
+# being covered by it. The shell's own menu/overlays also use the overlay
+# layer; whichever is summoned last is on top, and both close on Escape.
+layer = "overlay"
+exclusive_zone = -1
+anchor_top = true
+anchor_bottom = true
+anchor_left = true
+anchor_right = true
+
+[columns]
+"symbols" = 3
+
+[placeholders]
+"default" = { input = "Search", list = "No results" }
+"desktopapplications" = { input = "Run an app", list = "No matching app" }
+"clipboard" = { input = "Clipboard history", list = "Nothing copied yet" }
+"files" = { input = "Find a file", list = "No files" }
+"websearch" = { input = "Search the web", list = "" }
+
+[providers]
+default = ["desktopapplications", "calc", "websearch"]
+empty = ["desktopapplications"]
+ignore_preview = []
+max_results = 50
+
+# Prefixes match /etc/xdg defaults so muscle memory transfers from the docs.
+# ':' (clipboard) and '.' (symbols) overlap in purpose with the shell's own
+# omarchy.clipboard and omarchy.emojis overlays — that duplication is
+# deliberate here: those overlays are not currently bound to anything.
+[[providers.prefixes]]
+prefix = ";"
+provider = "providerlist"
+
+[[providers.prefixes]]
+prefix = ">"
+provider = "runner"
+
+[[providers.prefixes]]
+prefix = "/"
+provider = "files"
+
+[[providers.prefixes]]
+prefix = "."
+provider = "symbols"
+
+[[providers.prefixes]]
+prefix = "!"
+provider = "todo"
+
+[[providers.prefixes]]
+prefix = "="
+provider = "calc"
+
+[[providers.prefixes]]
+prefix = "@"
+provider = "websearch"
+
+[[providers.prefixes]]
+prefix = ":"
+provider = "clipboard"
+
+[[providers.prefixes]]
+prefix = "$"
+provider = "windows"
+
+[[providers.prefixes]]
+prefix = "%"
+provider = "bookmarks"
+
+[providers.clipboard]
+time_format = "relative"
+
+[keybinds]
+close = ["Escape"]
+next = ["Down", "ctrl j"]
+previous = ["Up", "ctrl k"]
+left = ["Left"]
+right = ["Right"]
+down = ["Down"]
+up = ["Up"]
+toggle_exact = ["ctrl e"]
+resume_last_query = ["ctrl r"]
+quick_activate = ["F1", "F2", "F3", "F4"]
+page_down = ["Page_Down"]
+page_up = ["Page_Up"]
+show_actions = ["alt j"]
