@@ -1,0 +1,135 @@
+/* Waybar stylesheet — fallback bar, styled to echo the Quickshell one.
+ *
+ * Colours come from an @import of the theme-rendered file, not from values
+ * written here:
+ *
+ *   ~/dotfiles/config/omarchy/themed/waybar.css.tpl
+ *     -> ~/.local/state/omarchy/current/theme/waybar.css   (@define-color only)
+ *
+ * That single render is enough — see the long comment at the top of the
+ * .tpl for why this doesn't need walker.css.tpl's second stage. Everything
+ * below (padding, radii, spacing, font) is a fixed constant, hand-picked to
+ * look right against the shell's own spacing rather than derived from it.
+ *
+ * The import path is absolute because GTK CSS has no concept of $HOME; it is
+ * also machine-specific like the rest of this repo (see README.md — this is
+ * one CachyOS box, not a portable dotfiles kit).
+ *
+ * Font: JetBrainsMono Nerd Font, named explicitly. This machine's system
+ * `monospace` alias resolves to Noto Sans Mono, which has no Nerd Font glyphs
+ * — the icons below would render as tofu boxes under a bare `monospace`.
+ */
+
+@import "/home/monke/.local/state/omarchy/current/theme/waybar.css";
+
+* {
+  font-family: "JetBrainsMono Nerd Font";
+  font-size: 13px;
+  min-height: 0;
+}
+
+window#waybar {
+  background: @background;
+  color: @foreground;
+}
+
+/* ------------------------------------------------------------------ left */
+
+#custom-launcher {
+  padding: 0 12px;
+  color: @accent;
+  font-size: 15px;
+}
+
+#custom-launcher:hover {
+  background: alpha(@foreground, 0.08);
+}
+
+#workspaces {
+  margin: 0 4px;
+}
+
+#workspaces button {
+  padding: 0 6px;
+  color: @muted;
+}
+
+#workspaces button.active {
+  color: @accent;
+}
+
+#workspaces button.empty {
+  color: @muted;
+  opacity: 0.5;
+}
+
+#workspaces button:hover {
+  background: alpha(@foreground, 0.08);
+}
+
+/* ---------------------------------------------------------------- center */
+
+#idle_inhibitor,
+#language,
+#clock,
+#custom-weather {
+  padding: 0 10px;
+  color: @foreground;
+}
+
+#idle_inhibitor.activated {
+  color: @accent;
+}
+
+#custom-weather {
+  color: @muted;
+}
+
+/* ------------------------------------------------------------------ right */
+
+#tray,
+#bluetooth,
+#network,
+#pulseaudio,
+#cpu,
+#memory,
+#custom-power {
+  padding: 0 10px;
+  color: @foreground;
+}
+
+#tray > .passive {
+  -gtk-icon-effect: dim;
+}
+
+#bluetooth.disabled,
+#network.disconnected {
+  color: @muted;
+}
+
+#pulseaudio.muted {
+  color: @muted;
+}
+
+#custom-power {
+  color: @red;
+  font-size: 15px;
+}
+
+#custom-power:hover {
+  background: alpha(@bright_red, 0.15);
+}
+
+/* Same hover affordance across every right-hand indicator. */
+#bluetooth:hover,
+#network:hover,
+#pulseaudio:hover {
+  background: alpha(@foreground, 0.08);
+}
+
+tooltip {
+  background: @dark_background;
+  color: @foreground;
+  border: 1px solid alpha(@foreground, 0.15);
+  border-radius: 6px;
+}

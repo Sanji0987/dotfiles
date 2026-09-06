@@ -1,0 +1,167 @@
+// Waybar config — a fallback bar, not a daily driver.
+//
+// The Quickshell shell (~/.local/share/omarchy, run via omarchy-shell-run) is
+// what actually runs day to day. This exists for the moments Quickshell is
+// down, mid-rebuild after a qt6-base bump, or just being debugged — start it
+// by hand with `waybar -c ~/.config/waybar/config.jsonc` (or bare `waybar`,
+// since this is the file waybar finds by default at ~/.config/waybar/).
+//
+// Layout below mirrors ~/.config/omarchy/shell.json's bar.layout as closely
+// as a Waybar module set allows. Left column is a per-module comment mapping
+// back to the omarchy.* widget it stands in for; two widgets have no Waybar
+// equivalent and are simply not here — see the note above "tray" on the
+// right.
+{
+  "layer": "top",
+  "position": "top",
+  "height": 32,
+  "spacing": 4,
+
+  "modules-left": [
+    // omarchy.menu — the shell has no launcher-icon equivalent to link to,
+    // so this just runs the launcher this machine actually uses.
+    "custom/launcher",
+    // omarchy.workspaces
+    "hyprland/workspaces"
+  ],
+
+  "modules-center": [
+    // omarchy.indicators is a bundle of manual toggles (dictation, screen
+    // recording, DND, night light, stay-awake, ...); Waybar has no bundle
+    // widget for that. idle_inhibitor covers the one toggle from that set
+    // with a real Waybar module (stay-awake), which is the closest a single
+    // module gets.
+    "idle_inhibitor",
+    // omarchy.keyboard-layout
+    "hyprland/language",
+    // omarchy.clock
+    "clock",
+    // omarchy.weather — no built-in module, so a custom one shells out.
+    "custom/weather"
+  ],
+
+  "modules-right": [
+    // omarchy.tray
+    "tray",
+    // omarchy.agents dropped — it is specific to the Quickshell shell's own
+    // agent-runner panel and has no Waybar counterpart at all.
+    // omarchy.bluetooth
+    "bluetooth",
+    // omarchy.network
+    "network",
+    // omarchy.audio
+    "pulseaudio",
+    // omarchy.monitor (system resources) — split across two plain modules
+    // rather than one combined panel.
+    "cpu",
+    "memory",
+    // omarchy.power
+    "custom/power"
+  ],
+
+  "custom/launcher": {
+    "format": "󰣇",
+    "tooltip-format": "Applications (walker)",
+    "on-click": "walker"
+  },
+
+  "hyprland/workspaces": {
+    "format": "{icon}",
+    "format-icons": {
+      "default": "",
+      "active": "",
+      "empty": ""
+    },
+    "persistent-workspaces": {
+      "*": 5
+    }
+  },
+
+  "idle_inhibitor": {
+    "format": "{icon}",
+    "format-icons": {
+      "activated": "",
+      "deactivated": ""
+    },
+    "tooltip-format-activated": "Stay awake: on",
+    "tooltip-format-deactivated": "Stay awake: off"
+  },
+
+  "hyprland/language": {
+    "format": "{}",
+    "format-en": "EN",
+    "keyboard-name": "at-translated-set-2-keyboard"
+  },
+
+  "clock": {
+    // Mirrors shell.json's clock.format / .formatAlt (h:mm AP / d MMMM 'W'ww
+    // yyyy). Click toggles between them the way the shell widget's alt view
+    // does.
+    "format": "{:%I:%M %p}",
+    "format-alt": "{:%-d %B 'W'%V %Y}",
+    "on-click": "mode",
+    "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>"
+  },
+
+  "custom/weather": {
+    "exec": "curl -sf --max-time 5 'wttr.in/?format=%C+%t' || true",
+    "interval": 1800,
+    "tooltip": false
+  },
+
+  "tray": {
+    "icon-size": 16,
+    "spacing": 8
+  },
+
+  "bluetooth": {
+    "format": "",
+    "format-disabled": "",
+    "format-connected": " {num_connections}",
+    "tooltip-format": "{controller_alias}\t{controller_address}",
+    "tooltip-format-connected": "{controller_alias}\t{controller_address}\n\n{device_enumerate}",
+    "on-click": "blueman-manager"
+  },
+
+  "network": {
+    "format-wifi": " {signalStrength}%",
+    "format-ethernet": "",
+    "format-disconnected": "⚠",
+    "tooltip-format-wifi": "{essid} ({signalStrength}%)",
+    "tooltip-format-ethernet": "{ifname}",
+    "on-click": "nm-connection-editor"
+  },
+
+  "pulseaudio": {
+    "format": "{icon} {volume}%",
+    "format-muted": " muted",
+    "format-icons": {
+      "default": ["", "", ""]
+    },
+    "on-click": "pactl set-sink-mute @DEFAULT_SINK@ toggle",
+    "on-click-right": "pavucontrol"
+  },
+
+  "cpu": {
+    "format": " {usage}%",
+    "interval": 5
+  },
+
+  "memory": {
+    "format": " {percentage}%",
+    "interval": 5
+  },
+
+  "custom/power": {
+    // No dedicated power-menu binary on this machine (wlogout etc. are not
+    // installed), so clicks go straight to logind/systemd rather than the
+    // Quickshell IPC lock (omarchy-shell lock lock) — this bar should still
+    // work when Quickshell is not the thing running.
+    "format": "⏻",
+    "tooltip": true,
+    "tooltip-format": "left: lock   middle: reboot   right: power off",
+    "on-click": "loginctl lock-session",
+    "on-click-middle": "systemctl reboot",
+    "on-click-right": "systemctl poweroff"
+  }
+}

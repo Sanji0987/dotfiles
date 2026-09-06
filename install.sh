@@ -35,8 +35,10 @@ link() { # $1 = repo-relative source, $2 = absolute destination
 }
 
 # ~/.config directories
+# edited by claude sonnet 5
+# added waybar so the fallback bar's config gets symlinked like every other
 for d in hypr kitty nvim walker elephant omarchy fish tmux alacritty mako \
-         btop fontconfig uwsm; do
+         btop fontconfig uwsm waybar; do
   link "config/$d" "$HOME/.config/$d"
 done
 link "config/libinput-gestures.conf" "$HOME/.config/libinput-gestures.conf"

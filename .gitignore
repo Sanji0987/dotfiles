@@ -14,6 +14,14 @@ omarchy-shell/state/
 # generated on every theme change (stage-2 render output)
 config/walker/themes/omarchy/style.css
 
+# edited by claude sonnet 5
+# documented why waybar needs no ignore entry, so it is not added later by mistake
+# waybar has no equivalent entry here: config/waybar/style.css @imports
+# ~/.local/state/omarchy/current/theme/waybar.css directly, and that render
+# target sits entirely outside this repo (no symlinked config/waybar/* path
+# ever gets written to), so there is nothing generated inside the tree to
+# ignore.
+
 # third-party theme clones + wallpapers — installed once via
 # `omarchy-shell-update --theme <git-url>`, see omarchy-shell/NOTES.md
 config/omarchy/themes/
