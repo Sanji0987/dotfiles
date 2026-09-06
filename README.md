@@ -20,7 +20,7 @@ truth, the home directory just points at it.
 | `config/tmux/` `config/alacritty/` `config/mako/` `config/btop/` | | the usual suspects |
 | `config/fontconfig/` `config/uwsm/` | | session plumbing |
 | `bin/` | `~/.local/bin` | small hand-rolled scripts |
-| `omarchy-shell/` | `~/omarchy_config_work` | tooling for the standalone shell — see below |
+| `omarchy-shell/` | — | tooling + notes for the standalone shell — see below |
 | `help.sh` | `~/help.sh` | command reference for the whole setup |
 
 ## The desktop shell
@@ -35,7 +35,8 @@ and how to pull individual upstream fixes in by hand.
 
 `omarchy-shell/resync.sh` (on PATH as `omarchy-shell-update`) re-derives
 everything generated from that tree: theme files, the walker stylesheet, the
-neovim colorscheme link, fonts, and the launcher scripts in `bin/`.
+neovim colorscheme link and the glyph font. The launcher, CLI shim and walker
+sync in `bin/` are symlinked into `~/.local/bin` by `install.sh`, not copied.
 
 One theme change retints the shell, walker, kitty-adjacent terminals, btop and
 neovim from a single `colors.toml`.

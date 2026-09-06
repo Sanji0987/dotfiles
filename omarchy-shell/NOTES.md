@@ -174,18 +174,26 @@ in `shell.qml`. Both files are watched, so edits apply live.
 ~/.local/bin/omarchy-shell-update           -> resync.sh       [SYMLINK]
 
 ~/.config/walker/
-  ├─ config.toml                   walker's own config         [AUTHORED, not deployed]
+  ├─ config.toml                   walker's own config     [AUTHORED, not in pipeline]
   └─ themes/omarchy/style.css      rendered stylesheet         [GENERATED]
 
 ~/help.sh                          command reference       [AUTHORED]
 
-~/omarchy_config_work/             this folder
-  ├─ NOTES.md
-  ├─ resync.sh                     was update.sh until 2026-09-04
-  ├─ files/                        canonical copies of the AUTHORED files
-  └─ state/                        written by resync.sh
-      ├─ last-known-good           stale — SHA from the pulled era
-      └─ update.log                one line per run
+~/dotfiles/                        the repo — single source of truth
+  ├─ bin/                          AUTHORED scripts, symlinked to ~/.local/bin
+  │   ├─ omarchy-shell-run
+  │   ├─ omarchy
+  │   └─ omarchy-walker-theme-sync
+  ├─ config/omarchy/               symlinked to ~/.config/omarchy
+  │   ├─ fontconfig.conf
+  │   ├─ themed/walker.css.tpl
+  │   └─ hooks/theme-set.d/walker-css
+  └─ omarchy-shell/                this folder
+      ├─ NOTES.md
+      ├─ resync.sh                 was update.sh until 2026-09-04
+      └─ state/                    written by resync.sh
+          ├─ last-known-good       stale — SHA from the pulled era
+          └─ update.log            one line per run
 ```
 
 The four provenance classes matter for updating — see below.
@@ -194,28 +202,39 @@ The four provenance classes matter for updating — see below.
 
 ## The authored files (not from Omarchy)
 
-Six files here were written by hand rather than coming from the repo. `files/`
-is their source of truth and `resync.sh` section 2 deploys them, so this folder
+Six files were written by hand rather than coming from the repo. They live in
+the dotfiles repo and are **symlinked** into place by `install.sh`, so the repo
 plus the vendored tree really is enough to rebuild the setup:
 
-| `files/` | deployed to |
+| in the repo | symlinked to |
 |---|---|
-| `omarchy-shell-run` | `~/.local/bin/omarchy-shell-run` |
-| `omarchy` | `~/.local/bin/omarchy` |
-| `fontconfig.conf` | `~/.config/omarchy/fontconfig.conf` |
-| `omarchy-walker-theme-sync` | `~/.local/bin/omarchy-walker-theme-sync` |
-| `walker.css.tpl` | `~/.config/omarchy/themed/walker.css.tpl` |
-| `theme-set.d-walker-css` | `~/.config/omarchy/hooks/theme-set.d/walker-css` |
+| `bin/omarchy-shell-run` | `~/.local/bin/omarchy-shell-run` |
+| `bin/omarchy` | `~/.local/bin/omarchy` |
+| `bin/omarchy-walker-theme-sync` | `~/.local/bin/omarchy-walker-theme-sync` |
+| `config/omarchy/fontconfig.conf` | `~/.config/omarchy/fontconfig.conf` |
+| `config/omarchy/themed/walker.css.tpl` | `~/.config/omarchy/themed/walker.css.tpl` |
+| `config/omarchy/hooks/theme-set.d/walker-css` | `~/.config/omarchy/hooks/theme-set.d/walker-css` |
 
-Order matters: all six are deployed in section 2, **before** section 4
-regenerates the theme. `walker.css.tpl` is the input to that render, and
-`omarchy-walker-theme-sync` is what finishes it in section 4b.
+The last three need no link of their own: `config/omarchy/` is itself the
+symlink for `~/.config/omarchy`, so they are already live where they sit.
+
+Until 2026-09-06 these were **copies**: `resync.sh` section 2 held a
+`sync_file` helper that re-deployed all six on every run, diffed any drift and
+backed up before overwriting. Three of them were being copied repo → repo,
+which never did anything. That is all gone — a symlink cannot drift, and the
+repo is under git, so `git status` is the drift detector. Section 2 now only
+checks the six are present (`-e`, so a dangling link fails too) and points at
+`install.sh` if not.
+
+Order still matters, but for rendering, not deployment: `walker.css.tpl` is
+the input to the section 4 theme render, and `omarchy-walker-theme-sync`
+finishes it in section 4b.
 
 `~/.config/walker/config.toml` is authored too but is deliberately **not**
-deployed — it is walker's own config rather than part of this pipeline, and
-having the updater overwrite it would be surprising.
+part of this pipeline — it is walker's own config, and having the resync
+touch it would be surprising.
 
-### `files/omarchy-shell-run`
+### `bin/omarchy-shell-run`
 
 Sets `OMARCHY_PATH`, prepends `bin/` to `PATH`, sets `FONTCONFIG_FILE`,
 sets `QS_DISABLE_FILE_WATCHER=1` and `QS_NO_RELOAD_POPUP=1` (mirroring
@@ -223,7 +242,7 @@ upstream `bin/omarchy-launch-shell`, which disables Quickshell's own hot
 reload because Omarchy restarts the shell deliberately), then execs
 `quickshell -n -p "$OMARCHY_PATH/shell"`.
 
-### `files/fontconfig.conf`
+### `config/omarchy/fontconfig.conf`
 
 The bar draws its icons through the fontconfig `monospace` alias. On this
 machine `monospace` resolves to **Noto Sans Mono**, which has no Nerd Font
@@ -687,7 +706,7 @@ The shell exposes plain IPC, so anything walker is bound to can be rebound to
 the shell without touching QML.
 
 **Nothing omarchy ships is on PATH here, so all of it goes through the
-`omarchy` shim** (`files/omarchy` -> `~/.local/bin/omarchy`). On a real Omarchy
+`omarchy` shim** (`bin/omarchy` -> `~/.local/bin/omarchy`). On a real Omarchy
 box `OMARCHY_PATH` comes from the uwsm session environment and
 `$OMARCHY_PATH/bin` is on PATH system-wide; on this machine `omarchy-shell-run`
 scopes both to the shell process, so a terminal or a Hyprland bind sees neither.
@@ -759,12 +778,13 @@ DERIVED from or COPIED out of that tree:
    the template (or any theme) and the output is stale until
    `omarchy-theme-set` re-runs.
 2. **`shell.json` and the glyph font are COPIES.**
-3. **The authored files** in `files/` deploy from this folder.
+3. **The authored files** live in the repo and are SYMLINKED into place by
+   `install.sh` — `resync.sh` only checks they are there.
 
-`resync.sh` deploys and re-derives all of it.
+`resync.sh` checks and re-derives all of it.
 
 ```bash
-omarchy-shell-update                 # deploy + re-derive
+omarchy-shell-update                 # check + re-derive
 omarchy-shell-update --check         # dry run, writes nothing
 omarchy-shell-update --theme nord
 omarchy-shell-update --theme https://github.com/user/omarchy-x-theme.git
@@ -778,13 +798,15 @@ no local git, so there is nothing scriptable to roll back to. Undo means the
 
 `omarchy-shell-update` is a symlink in `~/.local/bin` (already on `PATH`)
 pointing at `resync.sh` here — the old name, kept for muscle memory.
-`./resync.sh` works identically: every path in the script is an absolute
-constant, nothing is derived from `$0`.
+`./resync.sh` works identically. The script locates itself with
+`readlink -f "${BASH_SOURCE[0]}"` — resolving the symlink first is required,
+or `SELF_DIR` would come out as `~/.local/bin` — so the repo can be renamed
+or moved without editing anything.
 
 ### Preflight
 
 Everything the script asserts is validated **before the first mutation**. It
-checks that `files/` exists, that the vendored tree is present and has
+checks that the six authored files are installed, that the vendored tree is present and has
 `shell.json` and `shell.toml.tpl`, that `omarchy-theme-set` is on `PATH`, and
 that a theme is resolvable (`theme.name` present, or `--theme` passed — a
 missing one is a hard error, not a silent fallback to some default theme).
@@ -810,9 +832,10 @@ only vanish through a hand-edit.
 - **`shell.json` is never clobbered.** It only reports drift, since that is the
   file you customize — and the shell itself rewrites it when you change the bar
   through the UI. `--reset-config` overwrites it, with a timestamped backup.
-- **Authored files back up before overwrite.** `files/` is their source of
-  truth, so drift is overwritten — but the diff is printed and a `.bak` kept,
-  so a hand-edit to the deployed launcher is not lost silently.
+- **Authored files cannot drift.** They are symlinks into the repo, so there
+  is one copy and editing it through either path edits the same file. Git is
+  the drift detector. Section 2 only verifies they are present; a dangling
+  link fails the `-e` test and stops the run.
 - **Locked.** `flock` on `$XDG_RUNTIME_DIR/omarchy-config-update.lock` — the
   same pattern `omarchy-theme-set:139` uses.
 - **Checks the quickshell/Qt ABI.** After everything else, it compares the

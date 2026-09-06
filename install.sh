@@ -51,13 +51,14 @@ for f in .zshrc .p10k.zsh .bashrc .bash_profile .profile .gitconfig; do
   link "home/$f" "$HOME/$f"
 done
 
-# scripts
-for b in hermes update-appimage env env.fish; do
+# scripts. The omarchy three (launcher, CLI shim, walker theme sync) are ours
+# and are linked like anything else — resync.sh used to deploy them as copies,
+# which meant the deployed copy could silently drift from the repo.
+for b in hermes update-appimage env env.fish \
+         omarchy omarchy-shell-run omarchy-walker-theme-sync; do
   link "bin/$b" "$HOME/.local/bin/$b"
 done
 
-# the omarchy shell tooling (see omarchy-shell/NOTES.md for what this is)
-link "omarchy-shell" "$HOME/omarchy_config_work"
 link "help.sh" "$HOME/help.sh"
 
 # resync entry point on PATH
@@ -73,7 +74,7 @@ cat <<'EOF'
 
 Not handled by this script (see omarchy-shell/NOTES.md):
   - ~/.local/share/omarchy — the vendored shell tree; restore from a backup
-  - omarchy-shell-update    — run once after the tree is in place; it deploys
-                              the launcher, shim, fonts and regenerates the theme
+  - omarchy-shell-update    — run once after the tree is in place; it installs
+                              the glyph font and regenerates the theme files
   - third-party themes      — omarchy-shell-update --theme <git-url>
 EOF

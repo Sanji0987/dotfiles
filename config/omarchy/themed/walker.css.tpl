@@ -11,7 +11,7 @@
  *   ~/.config/walker/themes/omarchy/style.css
  *
  * Edit THIS file, never either generated copy, then re-run a theme set (or
- * ~/omarchy_config_work/update.sh).
+ * `omarchy-shell-update`).
  *
  * WHY TWO STAGES: omarchy-theme-set-templates:383 builds its sed script purely
  * from THEME_COLORS, which :380 fills from colors.toml alone. It has no notion

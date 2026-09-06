@@ -34,7 +34,7 @@
 #
 # Called from:
 #   ~/.config/omarchy/hooks/theme-set.d/walker-css   (normal theme changes)
-#   ~/omarchy_config_work/update.sh                  (OMARCHY_THEME_HEADLESS=1
+#   omarchy-shell-update                             (OMARCHY_THEME_HEADLESS=1
 #                                                     runs, where hooks are
 #                                                     skipped by
 #                                                     omarchy-theme-set:207)

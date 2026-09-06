@@ -10,27 +10,33 @@
 #   1. ~/.local/state/omarchy/current/theme/shell.toml is GENERATED from
 #      default/themed/shell.toml.tpl by omarchy's own template engine.
 #   2. ~/.config/omarchy/shell.json and the omarchy glyph font are COPIES.
-#   3. The authored files in files/ (launcher, CLI shim, walker sync, ...)
-#      are deployed from this folder, their source of truth.
+#   3. The authored files (launcher, CLI shim, walker sync, ...) live in this
+#      repo and are SYMLINKED into place by install.sh — not copied here.
 #
-# So: deploy, then re-derive. See NOTES.md for the full architecture.
+# So: check, then re-derive. See NOTES.md for the full architecture.
 #
 # This script used to be update.sh, which also pulled the upstream repo.
 # ~/.local/bin/omarchy-shell-update still points here for muscle memory.
 
 set -euo pipefail
 
+# Self-locating, so this folder can be renamed or moved without editing
+# anything. readlink -f is required, not optional: the script is reached
+# through the ~/.local/bin/omarchy-shell-update symlink, and without
+# resolving that first SELF_DIR would be ~/.local/bin.
+SELF_DIR="$(cd -- "$(dirname -- "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+REPO_DIR="$(cd -- "$SELF_DIR/.." && pwd)"
+
 OMARCHY_PATH="$HOME/.local/share/omarchy"
-WORK_DIR="$HOME/omarchy_config_work"
 STATE_DIR="$HOME/.local/state/omarchy"
 CONFIG_DIR="$HOME/.config/omarchy"
 FONT_DIR="$HOME/.local/share/fonts/omarchy"
 BIN_DIR="$HOME/.local/bin"
 
 # Our own bookkeeping, kept beside this script rather than in omarchy's state.
-OWN_STATE="$WORK_DIR/state"
+OWN_STATE="$SELF_DIR/state"
 LOG_FILE="$OWN_STATE/update.log"
-# Runtime dir, not the work dir, so --check writes nothing persistent. Same
+# Runtime dir, not the repo, so --check writes nothing persistent. Same
 # place and pattern omarchy-theme-set:139 uses for its own serialization.
 LOCK_FILE="${XDG_RUNTIME_DIR:-/tmp}/omarchy-config-update.lock"
 
@@ -102,7 +108,6 @@ run() {
 exec 9>"$LOCK_FILE"
 flock -n 9 || die "another instance is already running (lock: $LOCK_FILE)"
 
-[[ -d $WORK_DIR/files ]] || die "authored files missing at $WORK_DIR/files — this script cannot install the launcher without them"
 
 # The tree is not cloned or restored automatically — it has no upstream
 # anymore. If it is gone, that is a hand-repair situation, not a bootstrap.
@@ -199,42 +204,40 @@ fi
 QS_VERSION=$(pacman -Q quickshell-git 2>/dev/null || pacman -Q quickshell 2>/dev/null || echo "quickshell not from pacman")
 info "quickshell: $QS_VERSION"
 
-# ------------------------------------------------- 2. authored files (ours)
+# --------------------------------------------- 2. verify the authored files
 
-# None of these come from the vendored tree — we wrote them. This folder is
-# their source of truth, so re-sync them into place if they have drifted.
-# Drift here means someone edited the deployed copy directly, so show it and
-# keep a backup rather than overwriting silently.
+# None of these come from the vendored tree — we wrote them, and this repo is
+# their single source of truth. They used to be COPIED into place here, which
+# meant the deployed copy could drift from ours and the copy had to be
+# re-made on every run. They are symlinks now, created once by install.sh, so
+# there is nothing to deploy and nothing that can drift — git is the drift
+# detector. All this step does is confirm they are actually in place, because
+# everything below assumes they are.
 #
-# The walker three must be deployed BEFORE section 4 regenerates the theme:
-# walker.css.tpl is the input to that render, and the sync script is what
-# resolves the geometry tokens the render leaves behind.
-say "Syncing authored files"
-sync_file() {
-  local src="$1" dst="$2" mode="${3:-644}" backup
-  if [[ ! -f $src ]]; then warn "missing source: $src"; return; fi
-  if [[ -f $dst ]] && cmp -s "$src" "$dst"; then
-    info "$(basename "$dst") unchanged"
-    return
+# The walker three matter most: walker.css.tpl is the input to the section 4
+# render, and omarchy-walker-theme-sync resolves the geometry tokens that
+# render leaves behind.
+say "Checking authored files"
+authored_missing=0
+check_installed() {
+  # -e, not -f: these are symlinks, and -e fails on a dangling one, which is
+  # exactly the case worth catching.
+  if [[ -e $1 ]]; then
+    info "$2 ok"
+  else
+    warn "missing or dangling: $1"
+    authored_missing=1
   fi
-  if [[ -f $dst ]]; then
-    warn "$dst differs from $WORK_DIR/files — overwriting with ours"
-    diff -u "$dst" "$src" 2>/dev/null | sed -n '3,20p' | sed 's/^/      /' || true
-    backup="$dst.bak.$(date +%s)"
-    info "backing up -> $backup"
-    run cp "$dst" "$backup"
-  fi
-  info "installing $(basename "$dst") -> $dst"
-  run install -Dm"$mode" "$src" "$dst"
 }
-sync_file "$WORK_DIR/files/omarchy-shell-run" "$BIN_DIR/omarchy-shell-run" 755
-sync_file "$WORK_DIR/files/omarchy"          "$BIN_DIR/omarchy" 755
-sync_file "$WORK_DIR/files/fontconfig.conf"   "$CONFIG_DIR/fontconfig.conf" 644
-sync_file "$WORK_DIR/files/omarchy-walker-theme-sync" "$BIN_DIR/omarchy-walker-theme-sync" 755
-sync_file "$WORK_DIR/files/walker.css.tpl"            "$CONFIG_DIR/themed/walker.css.tpl" 644
-# 644 is correct, not a bug: omarchy-hook:20 runs hooks via `bash "$hook"`,
-# never exec, so the hook does not need to be executable.
-sync_file "$WORK_DIR/files/theme-set.d-walker-css"    "$CONFIG_DIR/hooks/theme-set.d/walker-css" 644
+check_installed "$BIN_DIR/omarchy-shell-run"               "omarchy-shell-run"
+check_installed "$BIN_DIR/omarchy"                         "omarchy"
+check_installed "$BIN_DIR/omarchy-walker-theme-sync"       "omarchy-walker-theme-sync"
+check_installed "$CONFIG_DIR/fontconfig.conf"              "fontconfig.conf"
+check_installed "$CONFIG_DIR/themed/walker.css.tpl"        "walker.css.tpl"
+check_installed "$CONFIG_DIR/hooks/theme-set.d/walker-css" "walker-css hook"
+if (( authored_missing )); then
+  die "authored files are not installed — run $REPO_DIR/install.sh"
+fi
 
 # ----------------------------------------------------------- 3. glyph font
 

@@ -5,7 +5,7 @@
 # desktop shell, assembled by hand. Nothing omarchy ships is on PATH by itself,
 # which is why almost everything below goes through the `omarchy` shim.
 #
-# Full notes: ~/omarchy_config_work/NOTES.md
+# Full notes: ~/dotfiles/omarchy-shell/NOTES.md
 #
 # Usage:  ./help.sh [section|search term]   e.g.  ./help.sh theme
 #         ./help.sh --no-pager
@@ -194,7 +194,7 @@ sec_update() {
   n "(detached 2026-09-04). It only changes when you edit it by hand. The"
   n "resync script re-derives everything generated or copied from it."
   b
-  row "omarchy-shell-update"                      "deploy + re-derive everything"
+  row "omarchy-shell-update"                      "check + re-derive everything"
   row "omarchy-shell-update --check"              "dry run, writes nothing"
   row "omarchy-shell-update --theme <name|url>"   "also switch/install a theme"
   row "omarchy-shell-update --reset-config"       "discard your shell.json (backed up first)"
@@ -203,7 +203,7 @@ sec_update() {
   n "  shell.json is never touched without --reset-config; drift is only reported."
   n "  To take an upstream fix: clone basecamp/omarchy to /tmp, diff, copy by hand."
   b
-  row "tail ~/omarchy_config_work/state/update.log" "one line per run"
+  row "tail ~/dotfiles/omarchy-shell/state/update.log" "one line per run"
 }
 
 sec_neovim() {
@@ -269,9 +269,9 @@ sec_quickshell() {
 
 sec_files() {
   h "FILES & PATHS"
-  row "~/omarchy_config_work/NOTES.md"           "the full notes — read this first"
-  row "~/omarchy_config_work/resync.sh"           "the resync script (-> ~/.local/bin/omarchy-shell-update)"
-  row "~/omarchy_config_work/files/"              "source of truth for the 6 authored files"
+  row "~/dotfiles/omarchy-shell/NOTES.md"        "the full notes — read this first"
+  row "~/dotfiles/omarchy-shell/resync.sh"       "the resync script (-> ~/.local/bin/omarchy-shell-update)"
+  row "~/dotfiles/bin/, ~/dotfiles/config/omarchy/" "the 6 authored files, symlinked into place"
   row "~/.local/share/omarchy/"                   "self-owned vendored tree, no git (OMARCHY_PATH)"
   row "~/.config/omarchy/shell.json"              "bar layout + idle timings — yours, never overwritten"
   row "~/.local/state/omarchy/current/theme/"     "generated theme files"
