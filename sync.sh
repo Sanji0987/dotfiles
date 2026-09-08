@@ -9,6 +9,7 @@ IFACE=org.gnome.desktop.interface
 # hand, and the sync/restore loops share one copy helper
 files_in() {
     printf '%s\n' \
+        mimeapps.list \
         kitty/kitty.conf \
         kitty/current-theme.conf \
         waybar/config.jsonc \
