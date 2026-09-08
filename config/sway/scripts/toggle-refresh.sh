@@ -4,6 +4,10 @@ set -euo pipefail
 CFG="${XDG_CONFIG_HOME:-$HOME/.config}"
 PERSIST="$CFG/sway/config.d/42-refresh.conf"
 
+for dep in jq awk swaymsg; do
+    command -v "$dep" >/dev/null || { echo "toggle-refresh: missing $dep" >&2; exit 1; }
+done
+
 read -r name w h cur < <(
     swaymsg -t get_outputs |
     jq -r 'map(select(.focused)) + map(select(.active)) | .[0]
@@ -19,7 +23,8 @@ mapfile -t rates < <(
 )
 
 if [ "${#rates[@]}" -lt 2 ]; then
-    notify-send -a sway -t 2000 "Refresh rate" "$name has only one mode at ${w}x${h}"
+    command -v notify-send >/dev/null &&
+        notify-send -a sway -t 2000 "Refresh rate" "$name has only one mode at ${w}x${h}" || true
     exit 0
 fi
 

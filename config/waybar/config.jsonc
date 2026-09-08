@@ -33,7 +33,8 @@
         "max-length": 60,
         "rewrite": {
             "(.*) — Mozilla Firefox": "  $1",
-            "(.*) - kitty": "  $1"
+            "(.*) - kitty": "  $1",
+            "(.*) - Brave": "  $1"
         }
     },
     "clock": {

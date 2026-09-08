@@ -65,8 +65,19 @@ miss it:
 
 ## Requires
 
-    kitty jetbrains-mono-fonts fontawesome-fonts rofi waybar blueman
+    kitty jetbrains-mono-fonts rofi waybar blueman
+    fontawesome-6-free-fonts fontawesome-6-brands-fonts
     NetworkManager-tui brightnessctl pavucontrol
+    jq libnotify
+
+`jq` is a hard dependency of `toggle-refresh.sh`; `libnotify` provides
+notify-send, which every script guards with `command -v` so it degrades to
+silence rather than failing.
+
+`42-refresh.conf` is rewritten by the refresh toggle, so it shows a git diff
+each time you change refresh rate. Add it to `.gitignore` if that noise is
+unwanted -- the cost is that a restored machine falls back to the display's
+preferred mode.
 
 ## Keys
 
