@@ -1,0 +1,111 @@
+// dead module blocks removed by Claude Code Opus
+{
+    "layer": "top",
+    "position": "top",
+    "height": 28,
+    "spacing": 0,
+    "modules-left": [
+        "sway/workspaces",
+        "sway/mode",
+        "sway/window"
+    ],
+    "modules-center": [
+        "idle_inhibitor",
+        "clock"
+    ],
+    "modules-right": [
+        "tray",
+        "pulseaudio",
+        "bluetooth",
+        "network",
+        "battery"
+    ],
+    "sway/workspaces": {
+        "disable-scroll": false,
+        "all-outputs": true,
+        "format": "{name}"
+    },
+    "sway/mode": {
+        "format": "<span style=\"italic\">{}</span>"
+    },
+    "sway/window": {
+        "format": "{title}",
+        "max-length": 60,
+        "rewrite": {
+            "(.*) — Mozilla Firefox": "  $1",
+            "(.*) - kitty": "  $1"
+        }
+    },
+    "clock": {
+        "format": "  {:%I:%M %p}",
+        "format-alt": "  {:%a %d %b  %I:%M %p}",
+        "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>"
+    },
+    "pulseaudio": {
+        "format": "{icon}  {volume}%",
+        "format-muted": "  muted",
+        "format-bluetooth": "  {volume}%",
+        "format-icons": {
+            "headphone": "",
+            "headset": "",
+            "default": [
+                "",
+                "",
+                ""
+            ]
+        },
+        "scroll-step": 5,
+        "on-click": "pavucontrol"
+    },
+    "bluetooth": {
+        "format": "  {status}",
+        "format-disabled": "  off",
+        "format-off": "  off",
+        "format-on": "",
+        "format-connected": "  {device_alias}",
+        "tooltip-format": "{controller_alias}\t{controller_address}",
+        "tooltip-format-connected": "{device_enumerate}",
+        "on-click": "blueman-manager"
+    },
+    "network": {
+        "format-wifi": "  {essid}",
+        "format-ethernet": "  wired",
+        "format-linked": "  no IP",
+        "format-disconnected": "  offline",
+        "tooltip-format-wifi": "{essid}  {signalStrength}%\n{ipaddr}/{cidr}\nvia {gwaddr}",
+        "tooltip-format-ethernet": "{ifname}\n{ipaddr}/{cidr}",
+        "tooltip-format-disconnected": "Disconnected",
+        "on-click": "kitty --app-id=nmtui-float nmtui"
+    },
+    "battery": {
+        "states": {
+            "warning": 30,
+            "critical": 15
+        },
+        "format": "{icon}  {capacity}%",
+        "format-charging": "  {capacity}%",
+        "format-plugged": "  {capacity}%",
+        "format-icons": [
+            "",
+            "",
+            "",
+            "",
+            ""
+        ],
+        "tooltip-format": "{timeTo}\nClick: cycle power profile",
+        "on-click": "~/.config/waybar/scripts/power-profile-cycle.sh"
+    },
+    "idle_inhibitor": {
+        "format": "{icon}",
+        "format-icons": {
+            "activated": "",
+            "deactivated": ""
+        },
+        "tooltip-format-activated": "Caffeine on — no lock, no screen blank, no sleep",
+        "tooltip-format-deactivated": "Caffeine off — locks after 5 min, screen off after 6"
+    },
+    "tray": {
+        "icon-size": 18,
+        "spacing": 10
+    }
+}

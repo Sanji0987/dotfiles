@@ -1,0 +1,104 @@
+/* redundant defaults removed by Claude Code Opus */
+* {
+    bg:           #1a1b26;
+    bg-alt:       #24283b;
+    fg:           #a9b1d6;
+    fg-bright:    #c0caf5;
+    muted:        #565f89;
+    accent:       #7aa2f7;
+
+    sel-bg:       #a9b1d614;
+    sel-border:   #7aa2f740;
+
+    background-color: transparent;
+    text-color:       @fg;
+    font:             "JetBrains Mono 12";
+}
+
+configuration {
+    show-icons:     true;
+    display-drun:   "";
+    display-run:    "";
+    display-combi:  "";
+    drun-display-format: "{name}";
+    hover-select:   true;
+    me-select-entry: "MousePrimary";
+    me-accept-entry: "MouseDPrimary";
+}
+
+window {
+    width:            560px;
+    background-color: @bg;
+    border:           1px;
+    border-color:     @accent;
+    padding:          0;
+}
+
+mainbox {
+    children: [ inputbar, listview ];
+    padding:  10px;
+    spacing:  8px;
+}
+
+inputbar {
+    children:   [ prompt, entry ];
+    spacing:    10px;
+    padding:    10px 12px;
+    border:     0 0 1px 0;
+    border-color: @bg-alt;
+}
+
+prompt {
+    text-color: @accent;
+    str:        "";
+}
+
+entry {
+    text-color:        @fg-bright;
+    placeholder:       "Search";
+    placeholder-color: @muted;
+    cursor:            text;
+}
+
+listview {
+    lines:        10;
+    columns:      1;
+    scrollbar:    false;
+    fixed-height: false;
+    spacing:      2px;
+    padding:      2px 0 0 0;
+}
+
+element {
+    padding:       9px 12px;
+    spacing:       11px;
+    border:        1px;
+    border-color:  transparent;
+    text-color:    @fg;
+    cursor:        pointer;
+}
+
+element selected {
+    background-color: @sel-bg;
+    border-color:     @sel-border;
+    text-color:       @accent;
+}
+
+element-text {
+    text-color:       inherit;
+    vertical-align:   0.5;
+}
+
+element-icon {
+    size:             20px;
+    vertical-align:   0.5;
+}
+
+message {
+    padding: 8px 12px;
+    border:  0;
+}
+
+textbox {
+    text-color: @muted;
+}
