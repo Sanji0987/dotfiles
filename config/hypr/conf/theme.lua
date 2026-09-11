@@ -1,15 +1,34 @@
 local c = require("conf.colors")
+-- edited by claude opus 5
+-- window borders now follow the active Omarchy theme instead of the fixed palette
+local t = require("conf.omarchy")
+
+-- edited by claude opus 5
+-- accent fading into the theme background: reads as a sheen on every theme,
+-- including the monochrome ones, where a second hue would clash
+local border_active = {
+    colors = { t.accent, t.mix(t.accent, t.background, 0.62) },
+    angle  = 45,
+}
+
+-- edited by claude opus 5
+-- inactive is a flat, barely-there lift off the background rather than black
+local border_inactive = t.rgba(t.mix(t.background, t.foreground, 0.14), "ff")
 
 hl.config({
     general = {
         gaps_in  = 1,
         gaps_out = 2,
 
-        border_size = 1,
+        -- edited by claude opus 5
+        -- 1px of pure black read as no border at all; 2px is visible, not chunky
+        border_size = 2,
 
         col = {
-            active_border   = "rgba(000000ff)",
-            inactive_border = "rgba(000000ff)",
+            -- edited by claude opus 5
+            -- theme-derived gradient and muted edge replace the hardcoded black
+            active_border   = border_active,
+            inactive_border = border_inactive,
         },
 
         resize_on_border        = true,
@@ -63,8 +82,10 @@ hl.config({
 hl.config({
     group = {
         col = {
-            border_active        = "rgba(" .. c.sand .. "ff)",
-            border_inactive      = "rgba(000000ff)",
+            -- edited by claude opus 5
+            -- grouped windows get the same themed edge, so the two agree
+            border_active        = border_active,
+            border_inactive      = border_inactive,
             border_locked_active = "rgba(" .. c.red .. "ff)",
         },
         groupbar = {

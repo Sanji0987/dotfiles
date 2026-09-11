@@ -22,6 +22,7 @@ scene: near-black silhouettes, deep slate-blue sky, pale gold sunset on the wate
 ├── hyprsunset.conf    colour temperature, fixed 5700K (hyprlang)
 └── conf/
     ├── colors.lua       palette table, returned as a module
+    ├── omarchy.lua      active Omarchy theme's colours, returned as a module
     ├── programs.lua     default apps + paths, returned as a module
     ├── display.lua      monitor, cursor, misc compositor behaviour
     ├── peripherals.lua  keyboard, mouse, touchpad, gestures
@@ -102,10 +103,28 @@ Returns the palette sampled from `linus.png` with ImageMagick
 | `cream` | `e7e6cf` | brightest point of the sky |
 | `red` | `a4696a` | not in the wallpaper; muted addition for alerts only |
 
-This table is the single source of truth for the Hyprland side. The same values are
+This table is the single source of truth for the Hyprland side *except the window
+borders*, which follow the active Omarchy theme via `conf/omarchy.lua`. The same values are
 duplicated by hand into `hyprlock.conf`, `~/.config/mako/config`,
 `~/.config/kitty/current-theme.conf` and `~/.config/ashell/config.toml`, since those
 are not Lua. **Change the palette here and mirror it into those four files.**
+
+### `conf/omarchy.lua`
+Reads the active theme's `colors.toml` from
+`~/.local/state/omarchy/current/theme/` and returns it as a table, plus `mix(a, b,
+amount)` and `rgba(hex, alpha)` helpers. Used by `theme.lua` for the border colours.
+
+Why it parses the TOML rather than loading the theme's own `hyprland.lua`: six of the
+24 installed themes ship one, and it is a `hypr2lua` dump of the entire look —
+rounding, blur, opacity, animations, layer rules — so loading it would clobber
+`theme.lua` wholesale instead of just recolouring the borders. Themes that ship none
+get a *generated* `hyprland.lua` of a different shape again. `colors.toml` is the one
+artefact every theme has, and it holds nothing but colours.
+
+Every lookup falls back (to `conf/colors.lua` values) so a missing or sparse
+`colors.toml` cannot error the config at load. No extra wiring is needed to follow a
+theme change: `omarchy-theme-set` ends by running `omarchy-restart-hyprctl`, which is
+`hyprctl reload`, which re-executes this config.
 
 ### `conf/programs.lua`
 Returns default applications and paths so `keybinds.lua` and `autostart.lua` agree:
@@ -130,22 +149,26 @@ unexpanded because it is used inside a shell command string).
 - Per-device overrides would go here as `hl.device({ name = "...", sensitivity = ... })`.
 
 ### `conf/theme.lua`
-The look. Requires `conf.colors` as `c`.
+The look. Requires `conf.colors` as `c` and `conf.omarchy` as `t`.
 
-- **Borders: 1px, pure black on both states** (`rgba(000000ff)` active *and* inactive).
-  This is intentional and non-negotiable in the design — it is what was asked for.
-  Because black-on-black gives no focus indication, focus is conveyed by
-  `inactive_opacity = 0.94` + `dim_inactive` (`dim_strength 0.08`) + the shadow instead.
-  If a focus colour is ever wanted, change `col.active_border` only.
+- **Borders: 2px, theme-derived.** The active border is a 45° gradient from the
+  theme's `accent` to that same accent mixed 62% into the theme background — a sheen
+  rather than a second hue, which is what keeps it working on the monochrome themes
+  (`vantablack`, `white`, `matte-black`) where any contrasting colour would clash.
+  The inactive border is flat: the background lifted 14% toward the foreground, so
+  it reads as an edge without competing for attention.
+  This replaced an earlier 1px pure-black-on-both-states design, where focus was
+  carried entirely by `inactive_opacity` + `dim_inactive` + the shadow. Those are all
+  still in place; the border now reinforces them instead of being invisible.
 - **Gaps: `gaps_in = 1`, `gaps_out = 2`.** As tight as is usable.
-- `rounding = 0` — rounded corners at 1px borders and 1px gaps expose wedges of
+- `rounding = 0` — rounded corners at these border and gap sizes expose wedges of
   wallpaper between windows and look broken. Keep square.
-- `resize_on_border` + `extend_border_grab_area = 12` — makes a 1px border grabbable.
+- `resize_on_border` + `extend_border_grab_area = 12` — makes a thin border grabbable.
 - Shadows use the wallpaper's own near-black (`c.black` at `b0` / `60` alpha).
 - Blur: 6/3 passes, `ignore_opacity`, brightness `0.72`, slight noise and vibrancy —
   tuned so translucent surfaces stay in the wallpaper's dusk mood rather than glowing.
-- Group bars (tabbed groups) use `sand` for the active border and `slate` for the
-  active tab.
+- Group bars (tabbed groups) take the same themed border as ordinary windows; the
+  bar itself still uses `slate` for the active tab and `red` for a locked group.
 
 ### `conf/animations.lua`
 Hyprland's default curve set (`easeOutQuint`, `easeInOutCubic`, `linear`,
