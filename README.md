@@ -5,8 +5,13 @@ Fedora 44 Sway spin — sway / waybar / kitty / rofi / GTK.
 ## Layout
 
     config/          mirrors ~/.config
+    home/            files that live directly in ~
     gsettings.sh     dconf settings (dark theme + fonts) as a replayable script
     sync.sh          copy live -> repo (default), or `./sync.sh restore` to go back
+
+`sync.sh` mirrors whole directories, so a new file in any tracked directory is
+picked up without editing the script, and a file deleted from `~/.config` is
+pruned from the repo on the next sync.
 
 `restore` overwrites live configs with no backup — that is its job, but do not
 run it by accident.
@@ -17,7 +22,7 @@ run it by accident.
 |--------|-------|-------|
 | sway   | `config.d/*.conf` | drop-ins only; `/etc/sway/config` untouched, so distro updates stay clean |
 | waybar | `config.jsonc`, `style.css` | one solid bar, Catppuccin Mocha |
-| kitty  | `kitty.conf` | JetBrains Mono 12, Alt+N tab switching |
+| kitty  | `kitty.conf` | JetBrains Mono 11, Alt+N tab switching |
 | rofi   | `omarchy-tokyo-night.rasi` | Omarchy-style menu, Tokyo Night palette |
 | GTK    | `gtk-3.0/`, `gtk-4.0/` | dark via prefer-dark on Adwaita |
 
@@ -27,14 +32,15 @@ run it by accident.
 |------|------|
 | `40-output.conf` | eDP-1 scale 1.15 |
 | `41-wallpaper.conf` | wallpaper |
-| `42-refresh.conf` | refresh rate, rewritten by the toggle script |
+| `42-refresh.conf` | pins the refresh rate — see Display refresh rate |
 | `45-borders.conf` | no borders, no titlebars |
 | `50-font.conf` | JetBrains Mono 11 |
 | `50-input-keyboard.conf` | repeat delay 200ms, rate 35/s |
+| `50-input-touchpad.conf` | tap to click, two-finger right click |
 | `50-terminal.conf` | kitty as `$term`; rebuilds `$menu` for rofi |
 | `60-bindings-launcher.conf` | Super+Space launcher |
 | `60-bindings-swap.conf` | Super+W kill / Super+Shift+Q tabbed |
-| `60-bindings-toggles.conf` | animation + refresh toggles |
+| `60-bindings-toggles.conf` | animation toggle |
 | `70-window-rules.conf` | nmtui opens floating |
 
 Two sway gotchas worth remembering:
@@ -43,7 +49,25 @@ Two sway gotchas worth remembering:
   include at the end of the file, so redefining `$term` alone does nothing —
   the affected binding and `$menu` must be restated.
 - Rebinding a key that is already bound makes sway warn and pop up swaynag.
-  `unbindsym` first.
+  Use `bindsym --no-warn`.
+
+## Display refresh rate
+
+The panel is 1920x1080 at 60Hz or 144Hz, and it **fails eDP link training on
+some mode switches**:
+
+    i915 0000:00:02.0: [drm] *ERROR* [CONNECTOR:eDP-1][DPRX] Failed to enable link training
+
+When that happens the screen goes black and sway stops answering IPC, sometimes
+permanently — a hard reboot is the only way out. There is deliberately no
+keybind for this.
+
+The rate is pinned in `42-refresh.conf` and applied once at sway startup. To see
+the current state and the exact commands to change it:
+
+    ~/display_rate
+
+Change the rate by editing the pin and rebooting, not live.
 
 ## Wallpapers
 
@@ -70,14 +94,9 @@ miss it:
     NetworkManager-tui brightnessctl pavucontrol
     jq libnotify
 
-`jq` is a hard dependency of `toggle-refresh.sh`; `libnotify` provides
-notify-send, which every script guards with `command -v` so it degrades to
-silence rather than failing.
-
-`42-refresh.conf` is rewritten by the refresh toggle, so it shows a git diff
-each time you change refresh rate. Add it to `.gitignore` if that noise is
-unwanted -- the cost is that a restored machine falls back to the display's
-preferred mode.
+`jq` is a hard dependency of `display_rate`; `libnotify` provides notify-send,
+which every script guards with `command -v` so it degrades to silence rather
+than failing.
 
 ## Keys
 
@@ -89,7 +108,6 @@ preferred mode.
 | `Super+Shift+Q` | tabbed layout |
 | `Super+Tab` | tiling/floating focus toggle |
 | `Super+Shift+M` | toggle GTK animations |
-| `Super+Shift+~` | toggle 144Hz / 60Hz |
 | `Alt+1..0` | kitty: go to tab |
 | `Ctrl+Alt+T` / `Ctrl+Alt+W` | kitty: new / close tab |
 

@@ -5,22 +5,14 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CFG="${XDG_CONFIG_HOME:-$HOME/.config}"
 IFACE=org.gnome.desktop.interface
 
-# simplified by Claude Code Opus: sway/config.d is globbed rather than listed by
-# hand, and the sync/restore loops share one copy helper
+CFG_DIRS=(kitty waybar rofi gtk-3.0 gtk-4.0 sway)
+HOME_FILES=(display_rate)
+
 files_in() {
-    printf '%s\n' \
-        mimeapps.list \
-        kitty/kitty.conf \
-        kitty/current-theme.conf \
-        waybar/config.jsonc \
-        waybar/style.css \
-        waybar/scripts/power-profile-cycle.sh \
-        rofi/config.rasi \
-        rofi/omarchy-tokyo-night.rasi \
-        gtk-3.0/settings.ini \
-        gtk-4.0/settings.ini
-    (cd "$1" 2>/dev/null && find sway/config.d -name '*.conf' -type f 2>/dev/null | sort) || true
-    (cd "$1" 2>/dev/null && find sway/scripts -name '*.sh' -type f 2>/dev/null | sort) || true
+    printf '%s\n' mimeapps.list
+    for d in "${CFG_DIRS[@]}"; do
+        (cd "$1" 2>/dev/null && find "$d" -type f 2>/dev/null | sort) || true
+    done
 }
 
 copy() {
@@ -37,6 +29,17 @@ sync)
         n=$((n + 1))
     done < <(files_in "$CFG")
 
+    for f in "${HOME_FILES[@]}"; do
+        [[ -f "$HOME/$f" ]] || { echo "  skip (missing): ~/$f" >&2; continue; }
+        copy "$HOME/$f" "$REPO/home/$f"
+        n=$((n + 1))
+    done
+
+    while IFS= read -r f; do
+        rel="${f#"$REPO/config/"}"
+        [[ -f "$CFG/$rel" ]] || { rm -f "$f"; echo "  pruned: $rel"; }
+    done < <(find "$REPO/config" -type f 2>/dev/null)
+
     {
         echo '#!/usr/bin/env bash'
         for k in color-scheme gtk-theme font-name monospace-font-name \
@@ -46,15 +49,21 @@ sync)
         done
     } > "$REPO/gsettings.sh"
     chmod +x "$REPO/gsettings.sh"
-    echo "synced $n files -> $REPO/config/"
+    echo "synced $n files -> $REPO"
     ;;
 restore)
     while read -r f; do
         [[ -f "$REPO/config/$f" ]] || continue
         copy "$REPO/config/$f" "$CFG/$f"
     done < <(files_in "$REPO/config")
+
+    for f in "${HOME_FILES[@]}"; do
+        [[ -f "$REPO/home/$f" ]] || continue
+        copy "$REPO/home/$f" "$HOME/$f"
+    done
+
     bash "$REPO/gsettings.sh"
-    echo "restored -> $CFG/  (run: swaymsg reload)"
+    echo "restored -> $CFG/ and $HOME/  (reboot or re-login to apply sway changes)"
     ;;
 *)
     echo "usage: $0 [sync|restore]" >&2

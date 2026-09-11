@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+for dep in jq awk swaymsg; do
+    command -v "$dep" >/dev/null || { echo "display_rate: missing $dep" >&2; exit 1; }
+done
+
+PERSIST="${XDG_CONFIG_HOME:-$HOME/.config}/sway/config.d/42-refresh.conf"
+SHORT="${PERSIST/#$HOME/\~}"
+
+read -r name w h cur < <(
+    swaymsg -t get_outputs |
+    jq -r 'map(select(.focused)) + map(select(.active)) | .[0]
+           | "\(.name) \(.current_mode.width) \(.current_mode.height) \(.current_mode.refresh)"'
+)
+
+hz() { awk "BEGIN{printf \"%.0f\", $1/1000}"; }
+
+mapfile -t rates < <(
+    swaymsg -t get_outputs |
+    jq -r --arg n "$name" --argjson w "$w" --argjson h "$h" '
+        .[] | select(.name == $n) | .modes[]
+        | select(.width == $w and .height == $h) | .refresh' |
+    sort -n | uniq
+)
+
+printf 'output   %s  %sx%s\n' "$name" "$w" "$h"
+printf 'running  %s Hz\n' "$(hz "$cur")"
+if [ -s "$PERSIST" ]; then
+    printf 'pinned   %s\n' "$(sed -n 's/.*@\([0-9.]*\)Hz.*/\1 Hz/p' "$PERSIST")"
+else
+    printf 'pinned   nothing (display picks its preferred mode)\n'
+fi
+
+if [ "${#rates[@]}" -lt 2 ]; then
+    printf '\nOnly one mode at this resolution. Nothing to switch to.\n'
+    exit 0
+fi
+
+printf '\nThis panel fails eDP link training on some mode switches. When that\n'
+printf 'happens the screen goes black and sway stops responding, sometimes for\n'
+printf 'good. Change the rate by editing the pin and rebooting, not live.\n'
+
+printf '\nTo pin a rate, run one of these and reboot:\n\n'
+for r in "${rates[@]}"; do
+    printf "  %3s Hz   echo 'output %s mode %sx%s@%sHz' > %s\n" \
+        "$(hz "$r")" "$name" "$w" "$h" \
+        "$(awk "BEGIN{printf \"%.3f\", $r/1000}")" \
+        "$SHORT"
+done
+
+printf '\nTo unpin and let the display choose:\n\n'
+printf '  rm %s\n' "$SHORT"
+
+printf '\nLive switch without a reboot is possible but this is the command that\n'
+printf 'black-screened the machine before:\n\n'
+printf '  swaymsg output %s mode %sx%s@<rate>Hz\n' "$name" "$w" "$h"
