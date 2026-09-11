@@ -17,8 +17,11 @@ local border_inactive = t.rgba(t.mix(t.background, t.foreground, 0.14), "ff")
 
 hl.config({
     general = {
-        gaps_in  = 1,
-        gaps_out = 2,
+        -- edited by claude opus 5
+        -- gaps_in applies to each side, so 4 shows 8px between two windows and
+        -- matches the 8px to the screen edge: one spacing everywhere
+        gaps_in  = 4,
+        gaps_out = 8,
 
         -- edited by claude opus 5
         -- 1px of pure black read as no border at all; 2px is visible, not chunky

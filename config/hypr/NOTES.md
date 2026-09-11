@@ -160,9 +160,12 @@ The look. Requires `conf.colors` as `c` and `conf.omarchy` as `t`.
   This replaced an earlier 1px pure-black-on-both-states design, where focus was
   carried entirely by `inactive_opacity` + `dim_inactive` + the shadow. Those are all
   still in place; the border now reinforces them instead of being invisible.
-- **Gaps: `gaps_in = 1`, `gaps_out = 2`.** As tight as is usable.
-- `rounding = 0` — rounded corners at these border and gap sizes expose wedges of
-  wallpaper between windows and look broken. Keep square.
+- **Gaps: `gaps_in = 4`, `gaps_out = 8`.** `gaps_in` is applied to each side, so
+  two adjacent windows show 8px between them, matching the 8px to the screen
+  edge — one spacing everywhere rather than a thinner seam in the middle.
+- `rounding = 0` — square by choice. The original reason was that rounded corners
+  at 1px borders and 1px gaps exposed wedges of wallpaper between windows; at the
+  current 2px/2px it is a closer call again, but it stays taste, not a constraint.
 - `resize_on_border` + `extend_border_grab_area = 12` — makes a thin border grabbable.
 - Shadows use the wallpaper's own near-black (`c.black` at `b0` / `60` alpha).
 - Blur: 6/3 passes, `ignore_opacity`, brightness `0.72`, slight noise and vibrancy —
@@ -192,9 +195,10 @@ Reads top to bottom: window rules, then workspace rules, then layer rules.
   disables blur, dim, shadow and animations. Keeps the compositor out of the way in games.
 - `pip-on-top` — Picture-in-Picture floats and pins.
 - `move-hyprland-run` — carried over from the original config.
-- **Smart gaps**: `w[tv1]` (single tiled window) and `f[1]` (single fullscreen) get
-  `gaps_in/out = 0`, and the matching window rules drop `border_size` to 0 — a lone
-  window is completely edge-to-edge.
+- **Smart gaps**: `f[1]` (single fullscreen) gets `gaps_in/out = 0` and the matching
+  window rule drops `border_size` to 0, so fullscreen really is edge-to-edge.
+  `w[tv1]` (single tiled window) used to do the same and no longer does — losing
+  the gaps *and* the border on the commonest layout of all undid both of them.
 - **Layer rules** blur the `ashell` bar, `notifications` (mako) and `hyprlauncher` so the
   wallpaper reads through them; `selection` (slurp) gets no animation.
 
