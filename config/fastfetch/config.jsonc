@@ -1,0 +1,45 @@
+// fastfetch — laid out to match the rainynight theme's screenshots.
+//
+// Colours are deliberately ANSI names ("white", "default") rather than hex.
+// That makes them resolve through the terminal palette, and the terminal
+// palette is generated from the active Omarchy theme by
+// omarchy-kitty-theme-sync — so this follows the theme with no template and no
+// hook of its own.
+//
+// The screenshots show lowercase keys, no colons and no separator rule, which
+// is what the display block below reproduces.
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+
+  "logo": {
+    "source": "arch_small",
+    "color": { "1": "white" },
+    "padding": { "left": 2, "right": 4 }
+  },
+
+  "display": {
+    "separator": "  ",
+    "key": { "width": 7 },
+    "color": { "keys": "light_black", "title": "white" }
+  },
+
+  "modules": [
+    { "type": "title", "format": "{user-name}@{host-name}" },
+    { "type": "os", "key": "os" },
+    { "type": "wm", "key": "de" },
+    { "type": "packages", "key": "pkgs" },
+    { "type": "shell", "key": "shell" },
+    { "type": "kernel", "key": "kernel" },
+    { "type": "uptime", "key": "uptime" },
+    // No built-in module reports this. Days since the first line of the pacman
+    // log, which is the install itself -- on this machine, the Calamares run.
+    {
+      "type": "command",
+      "key": "os age",
+      "text": "d=$(awk 'NR==1{sub(/^\\[/,\"\");sub(/\\].*$/,\"\");print}' /var/log/pacman.log); echo \"$(( ( $(date +%s) - $(date -d \"$d\" +%s) ) / 86400 )) days\""
+    },
+    { "type": "memory", "key": "memory" },
+    "break",
+    { "type": "colors", "symbol": "circle", "paddingLeft": 2 }
+  ]
+}

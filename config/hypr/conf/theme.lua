@@ -107,3 +107,14 @@ hl.config({
         },
     },
 })
+
+-- edited by claude opus 5
+-- a theme may override the look in conf/themes/<slug>.lua, merging over
+-- everything above; see conf/themes/rainynight.lua for why these live here
+-- rather than being loaded out of the theme itself
+if t.name then
+    local override = package.searchpath("conf.themes." .. t.name, package.path)
+    -- dofile, not pcall(require): a missing override is normal and silent,
+    -- but a broken one should still fail loudly instead of being swallowed
+    if override then dofile(override) end
+end

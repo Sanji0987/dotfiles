@@ -18,7 +18,11 @@
 
 local M = {}
 
-local THEME_COLORS = os.getenv("HOME") .. "/.local/state/omarchy/current/theme/colors.toml"
+local STATE = os.getenv("HOME") .. "/.local/state/omarchy/current"
+local THEME_COLORS = STATE .. "/theme/colors.toml"
+-- edited by claude opus 5
+-- theme.lua needs the theme's slug to pick a per-theme override file
+local THEME_NAME = STATE .. "/theme.name"
 
 -- Last-resort values, taken from conf/colors.lua so a failed read still looks
 -- like this desktop rather than like nothing.
@@ -39,6 +43,19 @@ do
             if key then colors[key] = value end
         end
         handle:close()
+    end
+end
+
+-- edited by claude opus 5
+-- the active theme's slug, e.g. "rainynight"; nil if the file is unreadable
+do
+    local handle = io.open(THEME_NAME, "r")
+    if handle then
+        local name = (handle:read("l") or ""):match("^%s*(.-)%s*$")
+        handle:close()
+        -- A slug, and it is about to be turned into a file path, so refuse
+        -- anything that is not one rather than trusting the file's contents.
+        if name:match("^[%w._-]+$") then M.name = name end
     end
 end
 

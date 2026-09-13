@@ -12,7 +12,9 @@ truth, the home directory just points at it.
 | path | goes to | what |
 |---|---|---|
 | `config/hypr/` | `~/.config/hypr` | Hyprland (lua config) |
-| `config/kitty/` | `~/.config/kitty` | kitty + a stack of colour schemes |
+| `config/kitty/` | `~/.config/kitty` | kitty; palette generated from the desktop theme |
+| `config/kitty/themes/` | — | reviewed per-theme palette extracts (see below) |
+| `config/fastfetch/` | `~/.config/fastfetch` | fastfetch, coloured through the terminal palette |
 | `config/nvim/` | `~/.config/nvim` | LazyVim; colorscheme follows the desktop theme |
 | `config/omarchy/` | `~/.config/omarchy` | shell.json, theme templates, hooks |
 | `config/walker/` `config/elephant/` | `~/.config/…` | launcher + provider daemon |
@@ -35,11 +37,27 @@ and how to pull individual upstream fixes in by hand.
 
 `omarchy-shell/resync.sh` (on PATH as `omarchy-shell-update`) re-derives
 everything generated from that tree: theme files, the walker stylesheet, the
-neovim colorscheme link and the glyph font. The launcher, CLI shim and walker
-sync in `bin/` are symlinked into `~/.local/bin` by `install.sh`, not copied.
+kitty palette, the neovim colorscheme link and the glyph font. The launcher,
+CLI shim and the two theme-sync scripts in `bin/` are symlinked into
+`~/.local/bin` by `install.sh`, not copied.
 
-One theme change retints the shell, walker, kitty-adjacent terminals, btop and
-neovim from a single `colors.toml`.
+One theme change retints the shell, walker, the terminal, btop, the lock screen
+and neovim from a single `colors.toml`.
+
+**Themes installed from a git repo are only partly trusted, by design.** Omarchy
+refuses every `.lua` file such a theme ships plus `kitty.conf`,
+`alacritty.toml`, `ghostty.conf`, `foot.ini` and `vscode.json` — theme Lua would
+execute in the compositor and a terminal config can name the program the
+terminal launches. So for a cloned theme whose look depends on those files, the
+values are read, reviewed and vendored here instead:
+
+| in the repo | what it is |
+|---|---|
+| `config/hypr/conf/themes/<slug>.lua` | rounding, blur, opacity, borders — merged over `conf/theme.lua` while that theme is active |
+| `config/kitty/themes/<slug>.conf` | terminal palette, appended after the generated one so it wins |
+
+Both are loaded by theme slug, so a theme without them simply gets the generic
+theme-derived look.
 
 ## Install
 

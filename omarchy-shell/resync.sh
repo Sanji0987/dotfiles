@@ -232,9 +232,13 @@ check_installed() {
 check_installed "$BIN_DIR/omarchy-shell-run"               "omarchy-shell-run"
 check_installed "$BIN_DIR/omarchy"                         "omarchy"
 check_installed "$BIN_DIR/omarchy-walker-theme-sync"       "omarchy-walker-theme-sync"
+# edited by claude opus 5
+# the kitty palette is generated now, so its script and hook are load-bearing
+check_installed "$BIN_DIR/omarchy-kitty-theme-sync"        "omarchy-kitty-theme-sync"
 check_installed "$CONFIG_DIR/fontconfig.conf"              "fontconfig.conf"
 check_installed "$CONFIG_DIR/themed/walker.css.tpl"        "walker.css.tpl"
 check_installed "$CONFIG_DIR/hooks/theme-set.d/walker-css" "walker-css hook"
+check_installed "$CONFIG_DIR/hooks/theme-set.d/kitty-theme" "kitty-theme hook"
 if (( authored_missing )); then
   die "authored files are not installed — run $REPO_DIR/install.sh"
 fi
@@ -386,6 +390,41 @@ if [[ -d $WALKER_THEME_DIR && -x $WALKER_SYNC ]]; then
   else
     warn "omarchy-walker-theme-sync failed"
     printf '%s\n' "$walker_out" | sed 's/^/      /' >&2
+  fi
+fi
+
+# ------------------------------------------------------- 4d. kitty palette
+
+# edited by claude opus 5
+# kitty used to hold whatever `kitten themes` last wrote, ignoring the theme
+#
+# kitty.conf ends with `include current-theme.conf`. That file used to be
+# written by `kitten themes`, so the terminal sat on whatever palette was
+# picked last (Moonfly) no matter what the desktop theme was.
+#
+# It is generated now, from two layers: omarchy's own render of the theme's
+# colors.toml, plus a reviewed per-theme extract from
+# config/kitty/themes/<slug>.conf where this repo has one. The second layer
+# exists because omarchy refuses a cloned theme's kitty.conf outright
+# (omarchy-theme-set:30) — a kitty config can name the program the terminal
+# launches — and some themes ship a terminal palette that is deliberately
+# different from their colors.toml.
+#
+# Same hook arrangement as walker above: the theme-set.d hook covers
+# theme-switcher changes, this covers ours, both call the same script.
+
+KITTY_SYNC="$HOME/.local/bin/omarchy-kitty-theme-sync"
+
+if [[ -x $KITTY_SYNC ]]; then
+  say "Syncing kitty palette"
+  if (( DRY_RUN )); then
+    dim "would run: $KITTY_SYNC"
+  elif kitty_out=$("$KITTY_SYNC" 2>&1); then
+    info "current-theme.conf rendered from current/theme/kitty.conf"
+    [[ -n $kitty_out ]] && printf '%s\n' "$kitty_out" | sed 's/^/      /'
+  else
+    warn "omarchy-kitty-theme-sync failed"
+    printf '%s\n' "$kitty_out" | sed 's/^/      /' >&2
   fi
 fi
 

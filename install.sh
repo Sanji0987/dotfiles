@@ -37,8 +37,10 @@ link() { # $1 = repo-relative source, $2 = absolute destination
 # ~/.config directories
 # edited by claude sonnet 5
 # added waybar so the fallback bar's config gets symlinked like every other
+# edited by claude opus 5
+# added fastfetch so its new config gets symlinked like every other
 for d in hypr kitty nvim walker elephant omarchy fish tmux alacritty mako \
-         btop fontconfig uwsm waybar; do
+         btop fontconfig uwsm waybar fastfetch; do
   link "config/$d" "$HOME/.config/$d"
 done
 link "config/libinput-gestures.conf" "$HOME/.config/libinput-gestures.conf"
@@ -56,8 +58,11 @@ done
 # scripts. The omarchy three (launcher, CLI shim, walker theme sync) are ours
 # and are linked like anything else — resync.sh used to deploy them as copies,
 # which meant the deployed copy could silently drift from the repo.
+# edited by claude opus 5
+# added the kitty theme sync, which the theme-set.d hook and resync.sh both call
 for b in hermes update-appimage env env.fish \
-         omarchy omarchy-shell-run omarchy-walker-theme-sync; do
+         omarchy omarchy-shell-run omarchy-walker-theme-sync \
+         omarchy-kitty-theme-sync; do
   link "bin/$b" "$HOME/.local/bin/$b"
 done
 

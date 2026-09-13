@@ -249,6 +249,24 @@ sec_walker() {
   b
   row "~/.local/bin/omarchy-walker-theme-sync"    "re-render by hand"
   row "journalctl --user -u walker.service -n 50" "GTK parser errors show up here"
+  b
+  # edited by claude opus 5
+  # documented the kitty palette pipeline and the cloned-theme denylist
+  n "  kitty's palette is generated the same way. current-theme.conf used to be"
+  n "  written by 'kitten themes' and held whatever was picked last, so the"
+  n "  terminal ignored the desktop theme entirely."
+  b
+  row "~/.local/bin/omarchy-kitty-theme-sync"     "re-render by hand"
+  row "~/dotfiles/config/kitty/themes/<slug>.conf" "reviewed per-theme override"
+  b
+  n "  A theme installed from a git repo may NOT supply .lua, kitty.conf,"
+  n "  alacritty.toml, ghostty.conf, foot.ini or vscode.json — theme Lua runs in"
+  n "  the compositor, a terminal config names what the terminal launches."
+  n "  omarchy-theme-set prints exactly what it ignored. Where a cloned theme's"
+  n "  look depends on those, the values are vendored into this repo:"
+  b
+  row "config/hypr/conf/themes/<slug>.lua"        "rounding, blur, opacity, borders"
+  row "config/kitty/themes/<slug>.conf"           "terminal palette"
 }
 
 sec_quickshell() {

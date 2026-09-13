@@ -157,7 +157,9 @@ in `shell.qml`. Both files are watched, so edits apply live.
   ├─ shell.json                    bar layout + idle timings   [COPIED]
   ├─ fontconfig.conf               scoped Nerd Font alias      [AUTHORED]
   ├─ themed/walker.css.tpl         walker stylesheet source    [AUTHORED]
+  ├─ themed/waybar.css.tpl         waybar palette source       [AUTHORED]
   ├─ hooks/theme-set.d/walker-css  runs the walker sync        [AUTHORED]
+  ├─ hooks/theme-set.d/kitty-theme runs the kitty sync         [AUTHORED]
   ├─ themes/  backgrounds/         empty user overlay dirs
   └─ plugins/                      third-party plugin dir (scanned by registry)
 
@@ -171,11 +173,15 @@ in `shell.qml`. Both files are watched, so edits apply live.
 ~/.local/bin/omarchy-shell-run              launcher           [AUTHORED]
 ~/.local/bin/omarchy                        CLI shim           [AUTHORED]
 ~/.local/bin/omarchy-walker-theme-sync      walker stage 2     [AUTHORED]
+~/.local/bin/omarchy-kitty-theme-sync       kitty palette      [AUTHORED]
 ~/.local/bin/omarchy-shell-update           -> resync.sh       [SYMLINK]
 
 ~/.config/walker/
   ├─ config.toml                   walker's own config     [AUTHORED, not in pipeline]
   └─ themes/omarchy/style.css      rendered stylesheet         [GENERATED]
+
+~/.config/kitty/current-theme.conf          terminal palette   [GENERATED]
+~/.config/btop/themes/current.theme -> current/theme/btop.theme  [SYMLINK]
 
 ~/help.sh                          command reference       [AUTHORED]
 
@@ -183,11 +189,16 @@ in `shell.qml`. Both files are watched, so edits apply live.
   ├─ bin/                          AUTHORED scripts, symlinked to ~/.local/bin
   │   ├─ omarchy-shell-run
   │   ├─ omarchy
-  │   └─ omarchy-walker-theme-sync
+  │   ├─ omarchy-walker-theme-sync
+  │   └─ omarchy-kitty-theme-sync
   ├─ config/omarchy/               symlinked to ~/.config/omarchy
   │   ├─ fontconfig.conf
   │   ├─ themed/walker.css.tpl
-  │   └─ hooks/theme-set.d/walker-css
+  │   ├─ themed/waybar.css.tpl
+  │   ├─ hooks/theme-set.d/walker-css
+  │   └─ hooks/theme-set.d/kitty-theme
+  ├─ config/hypr/conf/themes/      per-theme look overrides, by theme slug
+  ├─ config/kitty/themes/          per-theme terminal palettes, by theme slug
   └─ omarchy-shell/                this folder
       ├─ NOTES.md
       ├─ resync.sh                 was update.sh until 2026-09-04
@@ -202,7 +213,7 @@ The four provenance classes matter for updating — see below.
 
 ## The authored files (not from Omarchy)
 
-Six files were written by hand rather than coming from the repo. They live in
+Eight files were written by hand rather than coming from the repo. They live in
 the dotfiles repo and are **symlinked** into place by `install.sh`, so the repo
 plus the vendored tree really is enough to rebuild the setup:
 
@@ -211,11 +222,13 @@ plus the vendored tree really is enough to rebuild the setup:
 | `bin/omarchy-shell-run` | `~/.local/bin/omarchy-shell-run` |
 | `bin/omarchy` | `~/.local/bin/omarchy` |
 | `bin/omarchy-walker-theme-sync` | `~/.local/bin/omarchy-walker-theme-sync` |
+| `bin/omarchy-kitty-theme-sync` | `~/.local/bin/omarchy-kitty-theme-sync` |
 | `config/omarchy/fontconfig.conf` | `~/.config/omarchy/fontconfig.conf` |
 | `config/omarchy/themed/walker.css.tpl` | `~/.config/omarchy/themed/walker.css.tpl` |
 | `config/omarchy/hooks/theme-set.d/walker-css` | `~/.config/omarchy/hooks/theme-set.d/walker-css` |
+| `config/omarchy/hooks/theme-set.d/kitty-theme` | `~/.config/omarchy/hooks/theme-set.d/kitty-theme` |
 
-The last three need no link of their own: `config/omarchy/` is itself the
+The last four need no link of their own: `config/omarchy/` is itself the
 symlink for `~/.config/omarchy`, so they are already live where they sit.
 
 Until 2026-09-06 these were **copies**: `resync.sh` section 2 held a
@@ -227,8 +240,9 @@ checks the six are present (`-e`, so a dangling link fails too) and points at
 `install.sh` if not.
 
 Order still matters, but for rendering, not deployment: `walker.css.tpl` is
-the input to the section 4 theme render, and `omarchy-walker-theme-sync`
-finishes it in section 4b.
+the input to the section 4 theme render, `omarchy-walker-theme-sync` finishes
+it in section 4b, and `omarchy-kitty-theme-sync` regenerates the terminal
+palette in section 4d.
 
 `~/.config/walker/config.toml` is authored too but is deliberately **not**
 part of this pipeline — it is walker's own config, and having the resync
@@ -324,6 +338,43 @@ pass. The name is derived with upstream's exact rules
 (`omarchy-theme-install:30-33`) — basename, drop `.git`, strip a leading
 `omarchy-` and a trailing `-theme`, lowercase — so a theme installed either way
 lands in the same directory.
+
+### A cloned theme is only partly trusted
+
+`omarchy-theme-set` **refuses** some of what an installed (git-cloned) theme
+ships, and says so on every switch:
+
+```
+Ignored in ~/.config/omarchy/themes/rainynight: alacritty.toml ghostty.conf
+hyprland.lua kitty.conf neovim.lua vscode.json
+A theme installed from a git repo cannot supply Lua, a terminal config, or vscode.json.
+```
+
+The rule is every `.lua` file plus `alacritty.toml`, `foot.ini`, `ghostty.conf`,
+`kitty.conf` and `vscode.json` (`omarchy-theme-set:30`, `:142`). It is a sound
+rule: theme Lua would execute inside the compositor, and a terminal config can
+name the program the terminal launches. A built-in theme is not affected —
+those files are trusted, and for a theme that ships none of them the generic
+templates render equivalents from `colors.toml` anyway.
+
+The consequence is that a cloned theme whose *look* lives in those files will
+not look like its own screenshots. rainynight is the case in point: its
+`hyprland.lua` carries rounding 14, a bright blur and 0.93 opacity, and its
+`kitty.conf` carries a grey-blue terminal palette quite unlike its
+`colors.toml`. Both were refused, so the desktop kept square opaque windows and
+whatever `kitten themes` last wrote.
+
+Fix, where it matters: read the refused file, review it, and vendor the values
+into this repo, where they are ours and have been read.
+
+| vendored to | supplies |
+|---|---|
+| `config/hypr/conf/themes/<slug>.lua` | rounding, blur, opacity, borders — merged over `conf/theme.lua` while that theme is active |
+| `config/kitty/themes/<slug>.conf` | terminal palette, appended after the generated one so it wins |
+
+Both are keyed on the theme slug, so a theme with no override just gets the
+generic theme-derived look. Never copy a refused file in wholesale — the whole
+point is that it has been read first.
 
 **Do not use `omarchy-theme-install` here.** Its last line is a bare
 `omarchy-theme-set "$THEME_NAME"` with no `OMARCHY_THEME_HEADLESS=1`, so it
