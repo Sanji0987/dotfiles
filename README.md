@@ -19,7 +19,7 @@ truth, the home directory just points at it.
 | `config/omarchy/` | `~/.config/omarchy` | shell.json, theme templates, hooks |
 | `config/walker/` `config/elephant/` | `~/.config/…` | launcher + provider daemon |
 | `config/fish/` `home/.zshrc` … | | shells (zsh + p10k is the daily driver) |
-| `config/tmux/` `config/alacritty/` `config/mako/` `config/btop/` | | the usual suspects |
+| `config/tmux/` `config/alacritty/` `config/btop/` `config/cava/` | | the usual suspects |
 | `config/fontconfig/` `config/uwsm/` | | session plumbing |
 | `bin/` | `~/.local/bin` | small hand-rolled scripts |
 | `omarchy-shell/` | — | tooling + notes for the standalone shell — see below |

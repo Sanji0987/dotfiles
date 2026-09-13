@@ -60,7 +60,29 @@ hl.window_rule({
     rounding    = 0,
 })
 
-hl.layer_rule({ name = "blur-bar",       match = { namespace = "^ashell$" },        blur = true, ignore_alpha = 0.2 })
-hl.layer_rule({ name = "blur-notify",    match = { namespace = "^notifications$" }, blur = true, ignore_alpha = 0.3 })
-hl.layer_rule({ name = "blur-launcher",  match = { namespace = "^hyprlauncher$" },  blur = true, ignore_alpha = 0.3 })
+-- edited by claude opus 5
+-- all three blur rules named surfaces that no longer exist; replaced with the
+-- Omarchy shell's real namespaces, which want animation rules and NOT blur
+--
+-- The old rules targeted `ashell` (replaced by the Quickshell bar),
+-- `notifications` (mako, now uninstalled) and `hyprlauncher` (never used, the
+-- launcher is `omarchy menu`). `hyprctl layers` showed none of them, so all
+-- three had been dead for a while.
+--
+-- Deliberately no blur on the replacements. Upstream does not blur its own
+-- layers either: the shell paints its surfaces from shell.toml, and both
+-- `omarchy-background` and `omarchy-notifications` are FULL-SCREEN layers, so
+-- a compositor blur would blur the entire screen rather than the toast.
+hl.layer_rule({
+    name  = "bar-instant",
+    match = { namespace = "omarchy-bar" },
+    no_anim = true, animation = "none",
+})
+
+hl.layer_rule({
+    name  = "panels-instant",
+    match = { namespace = "^(omarchy-menu|omarchy-image-selector|omarchy-emojis|omarchy-clipboard|omarchy-keyboard-panel)$" },
+    no_anim = true, animation = "none",
+})
+
 hl.layer_rule({ name = "blur-selection", match = { namespace = "^selection$" },     no_anim = true })

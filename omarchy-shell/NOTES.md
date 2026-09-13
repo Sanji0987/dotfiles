@@ -462,9 +462,10 @@ A theme installed from a git repo cannot supply Lua, a terminal config, or vscod
 ```
 
 Deliberate upstream restriction, not a broken theme — an extra theme may not
-ship executable Lua or hijack a terminal/editor config. Everything the shell
-actually reads (`colors.toml`, `backgrounds/`, `hyprlock.conf`, `mako.ini`,
-`waybar.css`, `btop.theme`, `gtk.css`) is staged normally.
+ship executable Lua or hijack a terminal/editor config. Everything else is
+staged normally: `colors.toml`, `backgrounds/`, `hyprlock.conf`, `waybar.css`,
+`btop.theme`, `gtk.css`, and `mako.ini` and `swayosd.css` too, though neither of
+those has a reader here any more.
 
 One exception worth knowing: `alacritty.toml` is denied as a *file* but still
 read for its palette. `stage_installed_colors_from_alacritty` copies it into a
@@ -946,14 +947,41 @@ list in `bin/omarchy-upgrade-to-quattro` plus direct inspection of each plugin.
 
 Idle timings move into `shell.json`'s `idle` block.
 
-**Currently duplicated.** `autostart.lua` now launches `omarchy-shell-run`
-(line 9, with `ashell` commented out on line 8) but still launches `mako`,
-`hyprpaper` and `hypridle` — all three verified running alongside the shell.
-That means two notification daemons, two wallpaper setters and two idle
-managers are live at once. Symptoms to expect: duplicate or swallowed
-notifications, the wallpaper depending on who painted last, and idle/lock
-firing on whichever timeout is shorter (`hypridle`'s config, or `shell.json`'s
-`idle` block). Comment out lines 10, 11, 13 and 14 of `autostart.lua`.
+**Duplication, as of 2026-09-13.** `autostart.lua` launches `omarchy-shell-run`
+on line 8, and used to launch replaced daemons alongside it. Two are resolved
+and two are not:
+
+| daemon | state |
+|---|---|
+| `mako` | **gone** — line removed from `autostart.lua`, package uninstalled |
+| `hyprpaper` | **gone** — not started, not running; `hyprpaper.conf` is dead weight |
+| `hypridle` | still started (line 12) and running, alongside `plugins/services/idle` |
+| `hyprsunset` | still started (line 11) and running, alongside the shell's `nightlight` IPC target |
+
+`cliphist` (line 13) overlaps `plugins/clipboard` too, though the shell's own
+capture script is the one the clipboard panel reads.
+
+The notification case is worth understanding, because it was not what it looked
+like. D-Bus name ownership is **exclusive**: only one process can own
+`org.freedesktop.Notifications`, so there were never duplicate notifications.
+mako simply won the race at login and the shell's notification service sat idle
+and shadowed — `busctl --user call ... GetNameOwner s org.freedesktop.Notifications`
+names the winner, and it was mako's PID. Killing mako handed the name to
+Quickshell within the same second, no shell restart needed. Expect the same
+shape from the two that remain: not double behaviour, but whichever one grabbed
+the resource first silently winning.
+
+Nothing from mako's config needed porting. The shell already implements all of
+it natively:
+
+| mako setting | shell equivalent |
+|---|---|
+| `default-timeout=5000`, low `3000` | `normalPopupDuration 8000` / `lowPopupDuration 5000` as floors, app-requested timeout honoured up to `maxPopupDuration 30000` |
+| `[urgency=critical] default-timeout=0` | `durationFor()` returns 0 for Critical — same never-expire behaviour |
+| `[mode=do-not-disturb] invisible=1` | `doNotDisturb`, with an IPC toggle and a bypass allowlist for user-action toasts |
+| `anchor=top-right` | follows `bar.position` via `barPosition` / `barClearance` |
+| colours, font, border | `[notifications]` in `shell.toml`, so theme-driven |
+| `group-by=app-name`, `max-visible=5` | the popup stack and a 10-entry history (`historyLimit`) |
 
 Line 17 (`polkit-kde-authentication-agent-1`) can go too — the polkit plugin
 supersedes it inside Hyprland — but leave the *package* installed, see below.
