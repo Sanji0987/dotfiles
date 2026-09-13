@@ -213,7 +213,7 @@ The four provenance classes matter for updating — see below.
 
 ## The authored files (not from Omarchy)
 
-Eight files were written by hand rather than coming from the repo. They live in
+Ten files were written by hand rather than coming from the repo. They live in
 the dotfiles repo and are **symlinked** into place by `install.sh`, so the repo
 plus the vendored tree really is enough to rebuild the setup:
 
@@ -223,12 +223,14 @@ plus the vendored tree really is enough to rebuild the setup:
 | `bin/omarchy` | `~/.local/bin/omarchy` |
 | `bin/omarchy-walker-theme-sync` | `~/.local/bin/omarchy-walker-theme-sync` |
 | `bin/omarchy-kitty-theme-sync` | `~/.local/bin/omarchy-kitty-theme-sync` |
+| `bin/omarchy-sidra-theme-sync` | `~/.local/bin/omarchy-sidra-theme-sync` |
 | `config/omarchy/fontconfig.conf` | `~/.config/omarchy/fontconfig.conf` |
 | `config/omarchy/themed/walker.css.tpl` | `~/.config/omarchy/themed/walker.css.tpl` |
 | `config/omarchy/hooks/theme-set.d/walker-css` | `~/.config/omarchy/hooks/theme-set.d/walker-css` |
 | `config/omarchy/hooks/theme-set.d/kitty-theme` | `~/.config/omarchy/hooks/theme-set.d/kitty-theme` |
+| `config/omarchy/hooks/theme-set.d/sidra-theme` | `~/.config/omarchy/hooks/theme-set.d/sidra-theme` |
 
-The last four need no link of their own: `config/omarchy/` is itself the
+The last five need no link of their own: `config/omarchy/` is itself the
 symlink for `~/.config/omarchy`, so they are already live where they sit.
 
 Until 2026-09-06 these were **copies**: `resync.sh` section 2 held a
@@ -241,8 +243,8 @@ checks the six are present (`-e`, so a dangling link fails too) and points at
 
 Order still matters, but for rendering, not deployment: `walker.css.tpl` is
 the input to the section 4 theme render, `omarchy-walker-theme-sync` finishes
-it in section 4b, and `omarchy-kitty-theme-sync` regenerates the terminal
-palette in section 4d.
+it in section 4b, `omarchy-kitty-theme-sync` regenerates the terminal palette
+in section 4d and `omarchy-sidra-theme-sync` the Sidra palette in 4e.
 
 `~/.config/walker/config.toml` is authored too but is deliberately **not**
 part of this pipeline — it is walker's own config, and having the resync
@@ -534,6 +536,39 @@ First wiring on this machine also needs the plugin fetched once —
 `~/.local/share/nvim/lazy/aether`.
 
 ---
+
+## Sidra (Apple Music client), themed off the same pipeline
+
+Sidra is an Electron client (`wimpysworld/sidra`, an AppImage at
+`~/.local/bin/Sidra`). Its **only** extension point is a `custom-theme.json` in
+its Electron userData directory, `~/.config/Sidra/`:
+
+- `dist/customTheme.js` accepts exactly twelve hex slots — `base`, `mantle`,
+  `crust`, `surface0..2`, `overlay`, `text`, `subtext1`, `subtext0`, `accent`,
+  `accentHover` — each `/^#[0-9a-f]{6}$/i` and all twelve required. Anything
+  else returns null and the app silently falls back to stock Apple Music.
+- `dist/themeTemplate.js` renders those into an override stylesheet injected
+  with `insertCSS()` on every page load.
+- **There is no custom-CSS setting.** The full config key list is
+  `autoUpdate.enabled`, `classical.*`, `closeToTray.enabled`, `discord.enabled`,
+  `language`, `lastfm.*`, `lastPageUrl`, `musicService`,
+  `notifications.enabled`, `startPage`, `storefront`, `theme`, `zoomFactor`.
+  Nothing for CSS injection, animation or motion. Anything beyond colour means
+  repacking `app.asar`, which `autoUpdate` would then overwrite.
+
+Sidra **watches** the file (150ms debounce) and re-applies live, so the hook
+only has to write it — no restart, no reload call.
+
+The slot names are Catppuccin's, and the mix amounts in
+`bin/omarchy-sidra-theme-sync` were tuned by feeding it Catppuccin's own
+`colors.toml` and diffing against the Catppuccin Mocha palette Sidra ships in
+`dist/palettes.js`. All ten structural slots land within **one** channel value
+of 255, six of them exact. Change the amounts only with that comparison in hand.
+
+`theme` must be `"custom"` in `~/.config/Sidra/config.json` for any of it to
+show. That file also holds a Last.fm session key, so the sync script writes it
+only when it does not exist; an existing one is edited by hand or through
+Settings → Style, never rewritten wholesale.
 
 ## Walker + Elephant (launcher), themed off the same pipeline
 

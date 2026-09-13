@@ -61,10 +61,10 @@ done
 # and are linked like anything else — resync.sh used to deploy them as copies,
 # which meant the deployed copy could silently drift from the repo.
 # edited by claude opus 5
-# added the kitty theme sync, which the theme-set.d hook and resync.sh both call
+# added the kitty and sidra theme syncs, called by theme-set.d hooks and resync.sh
 for b in hermes update-appimage env env.fish \
          omarchy omarchy-shell-run omarchy-walker-theme-sync \
-         omarchy-kitty-theme-sync; do
+         omarchy-kitty-theme-sync omarchy-sidra-theme-sync; do
   link "bin/$b" "$HOME/.local/bin/$b"
 done
 

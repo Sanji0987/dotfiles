@@ -1,0 +1,11 @@
+#!/bin/bash
+# Regenerate Sidra's custom-theme.json after a theme change.
+# $1 is the slugified theme name (unused -- the script reads current/theme.name,
+# which is already the new theme by the time hooks run).
+#
+# Sidra watches the file itself, so it retints live; this only has to write it.
+#
+# NOTE: omarchy-theme-set:207 only runs hooks when OMARCHY_THEME_HEADLESS is
+# unset, so this fires for theme-switcher / omarchy-theme-set changes but NOT
+# for resync.sh, which sets it. resync.sh calls the same script directly.
+exec "$HOME/.local/bin/omarchy-sidra-theme-sync"

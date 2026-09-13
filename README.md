@@ -41,8 +41,8 @@ kitty palette, the neovim colorscheme link and the glyph font. The launcher,
 CLI shim and the two theme-sync scripts in `bin/` are symlinked into
 `~/.local/bin` by `install.sh`, not copied.
 
-One theme change retints the shell, walker, the terminal, btop, the lock screen
-and neovim from a single `colors.toml`.
+One theme change retints the shell, walker, the terminal, btop, the lock screen,
+neovim and Sidra from a single `colors.toml`.
 
 **Themes installed from a git repo are only partly trusted, by design.** Omarchy
 refuses every `.lua` file such a theme ships plus `kitty.conf`,
