@@ -38,9 +38,9 @@ link() { # $1 = repo-relative source, $2 = absolute destination
 # edited by claude sonnet 5
 # added waybar so the fallback bar's config gets symlinked like every other
 # edited by claude opus 5
-# added fastfetch so its new config gets symlinked like every other
+# added fastfetch and cava so their new configs get symlinked like every other
 for d in hypr kitty nvim walker elephant omarchy fish tmux alacritty mako \
-         btop fontconfig uwsm waybar fastfetch; do
+         btop fontconfig uwsm waybar fastfetch cava; do
   link "config/$d" "$HOME/.config/$d"
 done
 link "config/libinput-gestures.conf" "$HOME/.config/libinput-gestures.conf"
