@@ -148,25 +148,41 @@ window#waybar {
   color: @muted;
 }
 
-/* Matched to #mpris so the module reads as part of the bar rather than as an
- * addition to it. Classes come from bin/waybar-claude. */
+/* edited by claude opus 5
+ * now carries the scheme's accent instead of being a third grey pill
+ *
+ * Matched to #mpris in shape so it reads as part of the bar. The one
+ * difference is colour: this is the module you glance at for a number, so it
+ * takes the accent blue — the single chroma in an otherwise neutral scheme —
+ * while #mpris stays grey. The tooltip meter in bin/waybar-claude uses the
+ * same blue, so bar and panel agree.
+ *
+ * Classes come from bin/waybar-claude: ok / warning / critical. */
 #custom-claude {
   font-size: 10px;
   padding: 0 0.6em;
   border-radius: 8px;
   margin: 0.35em 0.3em;
-  background: alpha(@surface, 0.5);
-  border: 1px solid alpha(@border_lit, 0.4);
+  background: alpha(@accent, 0.14);
+  border: 1px solid alpha(@accent, 0.38);
   color: @foreground;
 }
 
+#custom-claude:hover {
+  background: alpha(@accent, 0.22);
+}
+
+/* Warning and critical drop the blue: the point of them is that they are not
+ * the normal state, so they must not read as the same chip in a new tint. */
 #custom-claude.warning {
   color: @bright;
-  border-color: alpha(@bright, 0.5);
+  background: alpha(@bright, 0.10);
+  border-color: alpha(@bright, 0.45);
 }
 
 #custom-claude.critical {
   color: @red;
+  background: alpha(@red, 0.14);
   border-color: alpha(@red, 0.55);
 }
 

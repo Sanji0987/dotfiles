@@ -27,7 +27,12 @@ import subprocess
 import sys
 from pathlib import Path
 
-ICON = "\U000f05b0"  # nf-md-robot_outline
+# edited by claude opus 5
+# moved off the Material-Design robot (U+F05B0): it is outside the BMP and was
+# rendering as a stray dash in the bar rather than a glyph. U+F2DB is in the
+# Font Awesome block, verified present in JetBrainsMono Nerd Font, and reads
+# cleanly at 10px.
+ICON = "\uf2db"  # nf-fa-microchip
 STATE = Path(
     os.environ.get("XDG_STATE_HOME") or Path.home() / ".local/state"
 ) / "agent-usage/claude.json"
@@ -117,11 +122,18 @@ def pick_primary(limits: list[dict]) -> dict | None:
 # Pango markup, which GTK renders in tooltips. Meters are drawn with box
 # characters inside <tt> so the columns line up under a proportional font.
 
-C_TEXT = "#dedede"
-C_MUTED = "#7e7e7e"
-C_BRIGHT = "#ffffff"
-C_TRACK = "#3a3a3a"
-C_RED = "#e05561"
+# edited by claude opus 5
+# these are the desktop palette verbatim, not approximations — C_TRACK was
+# #3a3a3a, which matched nothing; it is the palette's border grey now
+#
+# Same values as config/waybar/style.css, config/rofi/spotlight.rasi,
+# config/mako/config and config/hypr/conf/palette.lua. Edit together.
+C_TEXT   = "#dedede"   # foreground
+C_MUTED  = "#7e7e7e"   # muted
+C_BRIGHT = "#ffffff"   # bright
+C_TRACK  = "#393939"   # border — the unfilled part of a meter
+C_ACCENT = "#0860f2"   # accent — selection blue, the one chroma in the scheme
+C_RED    = "#e05561"   # red — critical only
 
 METER_W = 24
 BAR_CHAR = "\u2501"  # heavy horizontal
@@ -145,7 +157,7 @@ def meter(fraction: float) -> str:
     # still say "something", or the row reads as unused.
     if filled == 0 and fraction > 0:
         filled = 1
-    colour = C_RED if fraction >= CRITICAL_AT else C_BRIGHT
+    colour = C_RED if fraction >= CRITICAL_AT else C_ACCENT
     return (
         "<tt>"
         + span(BAR_CHAR * filled, colour)

@@ -1,6 +1,22 @@
 // Waybar config — the bar.
 //
 // edited by claude opus 5
+// ICONS ARE WRITTEN AS \uXXXX ESCAPES ON PURPOSE.
+//
+// Every glyph in this file was an empty string: the volume icons were
+// ["", "", ""], mpris had no play/pause, network and bluetooth had none
+// either — waybar rendered "20%" with nothing before it. Raw PUA characters
+// do not survive being copied through tools that are not UTF-8 clean, and
+// they are invisible in a diff when they go missing. Escapes survive, and a
+// missing one is obvious on sight.
+//
+// All codepoints below are BMP (U+F000-U+F8FF, the Font Awesome block of Nerd
+// Fonts) and verified present in JetBrainsMono Nerd Font. Avoid the
+// Material-Design range (U+F0001+): it is outside the BMP, needs surrogate
+// pairs in JSON, and one of those is what was silently failing on the Claude
+// module.
+//
+// edited by claude opus 5
 // no longer a fallback mirroring the Quickshell bar's widget list; laid out
 // as its own thing now that it is what runs
 //
@@ -109,8 +125,8 @@
     "dynamic-order": ["title", "artist"],
     "dynamic-len": 34,
     "status-icons": {
-      "playing": "",
-      "paused": ""
+      "playing": "\uf04b",
+      "paused": "\uf04c"
     },
     "tooltip-format": "{player}: {title}\n{artist} — {album}"
   },
@@ -121,8 +137,8 @@
     "dynamic-order": ["title", "artist"],
     "dynamic-len": 34,
     "status-icons": {
-      "playing": "",
-      "paused": ""
+      "playing": "\uf04b",
+      "paused": "\uf04c"
     },
     "tooltip-format": "{player}: {title}\n{artist} — {album}"
   },
@@ -144,17 +160,17 @@
   },
 
   "bluetooth": {
-    "format": "",
-    "format-disabled": "",
-    "format-connected": " {num_connections}",
+    "format": "\uf293",
+    "format-disabled": "\uf293",
+    "format-connected": "\uf293 {num_connections}",
     "tooltip-format": "{controller_alias}\t{controller_address}",
     "tooltip-format-connected": "{controller_alias}\t{controller_address}\n\n{device_enumerate}",
     "on-click": "blueman-manager"
   },
 
   "network": {
-    "format-wifi": " {signalStrength}%",
-    "format-ethernet": "",
+    "format-wifi": "\uf1eb {signalStrength}%",
+    "format-ethernet": "\uf0e8",
     "format-disconnected": "⚠",
     "tooltip-format-wifi": "{essid} ({signalStrength}%)",
     "tooltip-format-ethernet": "{ifname}",
@@ -163,9 +179,9 @@
 
   "pulseaudio": {
     "format": "{icon} {volume}%",
-    "format-muted": " muted",
+    "format-muted": "\uf026 muted",
     "format-icons": {
-      "default": ["", "", ""]
+      "default": ["\uf026", "\uf027", "\uf028"]
     },
     "on-click": "pactl set-sink-mute @DEFAULT_SINK@ toggle",
     "on-click-right": "pavucontrol"
