@@ -1,9 +1,10 @@
 return {
 	terminal = "kitty",
 	fileManager = "dolphin",
-	menu = "omarchy menu toggle apps",
-	-- menu = "walker"
+	-- edited by claude opus 5
+	-- rofi replaces the Quickshell app menu; walker, the launcher before that,
+	-- is gone too. Toggling is done in keybinds.lua, not here.
+	menu = "rofi -show drun",
 	lock = "hyprlock",
-	-- wallpaper   = os.getenv("HOME") .. "/Pictures/linus.png",
 	shotDir = "$HOME/Pictures/Screenshots",
 }

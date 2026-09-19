@@ -1,0 +1,113 @@
+/* Spotlight-style rofi theme.
+ *
+ * Adapted from LR-Tech's macOS-Spotlight theme by way of KZDKM's dotfiles,
+ * which is where the look this desktop is aiming at comes from. Changed here:
+ * the palette is rainynight's rather than the original's blue, and the
+ * original's HiDPI-era sizes are dropped — this is one 1920x1080 display at
+ * scale 1, so 640px wide is right without scaling.
+ *
+ * Colours are the same palette as config/hypr/conf/palette.lua,
+ * config/mako/config, config/waybar/style.css and hyprlock.conf. Edit
+ * together; nothing syncs them.
+ *
+ * The window background carries alpha so Hyprland's blur layer rule for the
+ * rofi namespace has something to work with — without the rule this reads as
+ * plain translucency, with it as frosted glass.
+ */
+
+* {
+    font-family: "Inter";
+
+    bg0:  #1e1e2ee0;   /* window: the blur sits behind this          */
+    bg1:  #45475a80;   /* hairlines and separators                   */
+    bg2:  #89b4fa26;   /* selected row                               */
+
+    fg0:  #cdd6f4;     /* normal text                                */
+    fg1:  #ffffff;     /* selected text                              */
+    fg2:  #cdd6f480;   /* placeholder, inactive                      */
+    fg3:  #89b4fa;     /* accent                                     */
+
+    background-color: transparent;
+    text-color:       @fg0;
+
+    margin:  0;
+    padding: 0;
+    spacing: 0;
+}
+
+window {
+    background-color: @bg0;
+
+    location:      center;
+    width:         640;
+    border:        1px solid;
+    border-color:  @bg1;
+    border-radius: 14px;   /* matches Hyprland decoration:rounding */
+}
+
+inputbar {
+    font:     "Inter 18";
+    padding:  14px 16px;
+    spacing:  12px;
+    children: [ prompt, entry ];
+}
+
+prompt {
+    enabled:    true;
+    expand:     false;
+    text-color: @fg3;
+    str:        "";
+}
+
+prompt, entry, element-icon, element-text {
+    vertical-align: 0.5;
+}
+
+entry {
+    font:              inherit;
+    placeholder:       "Search";
+    placeholder-color: @fg2;
+}
+
+message {
+    border:           1px 0 0;
+    border-color:     @bg1;
+    background-color: transparent;
+}
+
+textbox {
+    padding: 10px 16px;
+}
+
+listview {
+    lines:         8;
+    columns:       1;
+    fixed-height:  false;
+    border:        1px 0 0;
+    border-color:  @bg1;
+    scrollbar:     false;
+}
+
+element {
+    padding:          9px 16px;
+    spacing:          14px;
+    background-color: transparent;
+    border-radius:    8px;
+}
+
+element normal active {
+    text-color: @fg3;
+}
+
+element selected normal, element selected active {
+    text-color:       @fg1;
+    background-color: @bg2;
+}
+
+element-icon {
+    size: 1.1em;
+}
+
+element-text {
+    text-color: inherit;
+}
