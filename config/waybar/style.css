@@ -1,26 +1,36 @@
-/* Waybar stylesheet — fallback bar, styled to echo the Quickshell one.
+/* Waybar stylesheet.
  *
- * Colours come from an @import of the theme-rendered file, not from values
- * written here:
+ * edited by claude opus 5
+ * no longer a fallback: the Quickshell bar it echoed is being retired, so
+ * this is the bar
  *
- *   ~/dotfiles/config/omarchy/themed/waybar.css.tpl
- *     -> ~/.local/state/omarchy/current/theme/waybar.css   (@define-color only)
- *
- * That single render is enough — see the long comment at the top of the
- * .tpl for why this doesn't need walker.css.tpl's second stage. Everything
- * below (padding, radii, spacing, font) is a fixed constant, hand-picked to
- * look right against the shell's own spacing rather than derived from it.
- *
- * The import path is absolute because GTK CSS has no concept of $HOME; it is
- * also machine-specific like the rest of this repo (see README.md — this is
- * one CachyOS box, not a portable dotfiles kit).
+ * Self-contained. Colours are defined below and everything else (padding,
+ * radii, spacing, font) is a hand-picked constant. Nothing is generated and
+ * nothing is imported.
  *
  * Font: JetBrainsMono Nerd Font, named explicitly. This machine's system
  * `monospace` alias resolves to Noto Sans Mono, which has no Nerd Font glyphs
  * — the icons below would render as tofu boxes under a bare `monospace`.
  */
 
-@import "/home/monke/.local/state/omarchy/current/theme/waybar.css";
+/* edited by claude opus 5
+ * palette inlined: this used to @import a generated file, and that render
+ * only ever defined two of the ten colours the template declared, so
+ * @muted, @accent, @red, @bright_red and @dark_background were silently
+ * undefined every time this bar ran
+ *
+ * rainynight's palette, the same one in conf/palette.lua, config/mako/config
+ * and config/hypr/hyprlock.conf. Edit those four together. */
+@define-color background      #1e1e2e;
+@define-color dark_background #181825;
+@define-color foreground      #cdd6f4;
+@define-color muted           #a6adc8;
+@define-color accent          #89b4fa;
+@define-color selection       #292b3b;
+@define-color red             #f38ba8;
+@define-color bright_red      #eba0ac;
+@define-color green           #a6e3a1;
+@define-color yellow          #f9e2af;
 
 * {
   font-family: "JetBrainsMono Nerd Font";

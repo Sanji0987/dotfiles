@@ -51,10 +51,10 @@
           "id": "omarchy.audio"
         },
         {
-          "id": "omarchy.monitor"
+          "id": "omarchy.power"
         },
         {
-          "id": "omarchy.power"
+          "id": "omarchy.monitor"
         }
       ]
     }

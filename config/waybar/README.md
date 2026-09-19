@@ -51,37 +51,22 @@ work when Quickshell itself isn't running.
 
 ## Theming
 
-Colours track the active theme the same way the rest of this repo does, just
-with one less moving part than Walker's version:
+<!-- edited by claude opus 5 -->
+<!-- the template/render pipeline this described is gone; colours live in
+     style.css now -->
 
-```
-config/omarchy/themed/waybar.css.tpl
-  |  omarchy's template engine, on every theme change: {{ colour }} tokens
-  v
-~/.local/state/omarchy/current/theme/waybar.css   (@define-color rules only)
-  |  @import, read fresh each time waybar starts
-  v
-config/waybar/style.css
-```
+Self-contained. The `@define-color` block at the top of `style.css` is the
+whole palette — rainynight's, the same values as `config/hypr/conf/palette.lua`,
+`config/mako/config` and `config/hypr/hyprlock.conf`. Edit those four together;
+nothing keeps them in step automatically.
 
-Walker needs a second render stage because its generated stylesheet has to
-become a real file inside `~/.config/walker/themes/omarchy/` — GTK silently
-ignores a symlinked `style.css` there, and geometry (row height, radius, icon
-size) has to be resolved against `shell.toml` and Hyprland's
-`decoration:rounding` first. None of that applies here: `style.css` just
-`@import`s the generated file by absolute path, and every geometry value
-(padding, radius, spacing, font size) is a fixed constant chosen to look
-right, not derived from the shell's own tokens. A plain `@import` is enough.
+This used to `@import` a file rendered from `config/omarchy/themed/waybar.css.tpl`
+on every theme change. That render only ever substituted two of the ten colours
+the template declared, so `@muted`, `@accent`, `@red`, `@bright_red` and
+`@dark_background` were undefined the whole time it was in use.
 
-To re-render after editing the template (or switching themes):
-
-```sh
-omarchy-shell-update
-```
-
-Waybar re-reads `style.css` fully each time it starts, so a running instance
-needs restarting to pick up a theme change; it does not follow the shell's
-live retint.
+Waybar re-reads `style.css` fully at startup, so restart it to pick up a
+colour change.
 
 Font is set explicitly to `JetBrainsMono Nerd Font` in `style.css` — this
 machine's `monospace` alias resolves to Noto Sans Mono, which has none of the
