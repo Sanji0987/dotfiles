@@ -60,15 +60,29 @@ they are kept in step by being edited together:
 | file | what it colours |
 |---|---|
 | `config/hypr/conf/palette.lua` | window borders (via `conf/theme.lua`) |
-| `config/hypr/conf/themes/rainynight.lua` | rounding, blur, opacity — merged over the base look |
+| `config/hypr/conf/theme.lua` | rounding, gaps, blur, opacity — the window look itself |
 | `config/hypr/hyprlock.conf` | lock screen |
 | `config/waybar/style.css` | bar |
 | `config/mako/config` | notifications |
 | `config/rofi/spotlight.rasi` | launcher |
+| `config/swayosd/style.css` | volume / media OSD |
 | `config/kitty/current-theme.conf` | terminal (and fastfetch, through ANSI names) |
 
-The colours are the rainynight theme's, vendored here when the theme that
-shipped them was still installed. Wallpapers live in `~/Pictures/Wallpapers/`.
+The scheme is deliberately colourless: near-black surfaces carried by alpha,
+focus shown as a step between two greys (`707070` / `393939`), and one blue
+used only for selection. The wallpaper supplies the colour; the chrome does
+not. Wallpapers live in `~/Pictures/Wallpapers/`.
+
+### Switching back
+
+The previous look — Catppuccin-derived "rainynight", 14px rounding,
+translucent windows, indigo borders — is kept at
+`config/hypr/conf/themes/rainynight.lua`. It is **dormant**: the `require` for
+it at the tail of `conf/theme.lua` is commented out, so uncommenting that line
+and running `hyprctl reload` restores the window look.
+
+Nothing else follows automatically. Each file in the table above holds its own
+copy of the palette, so a full switch means editing them too.
 
 ## Install
 

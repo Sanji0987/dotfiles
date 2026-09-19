@@ -32,6 +32,14 @@ local function channels(hex)
 end
 
 -- Blend two "#rrggbb" strings. amount 0 = all of a, 1 = all of b.
+--
+-- edited by claude opus 5
+-- no callers since the borders became flat greys; kept deliberately
+--
+-- Nothing calls this right now — conf/theme.lua derived its border shades with
+-- it until those became two literal greys. It stays because deriving a shade
+-- from the palette is the correct way to add one, and re-deriving this by hand
+-- next time is worse than carrying twelve lines.
 function M.mix(a, b, amount)
     local ar, ag, ab = channels(a)
     local br, bg, bb = channels(b)
