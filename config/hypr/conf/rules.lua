@@ -53,6 +53,17 @@ hl.window_rule({
 -- lose its gaps and its border, which undid both on the commonest layout
 hl.workspace_rule({ workspace = "f[1]", gaps_out = 0, gaps_in = 0 })
 
+-- edited by claude opus 5
+-- five persistent workspaces, so the overview always shows exactly five
+--
+-- Hyprland creates a workspace on demand and destroys it when its last window
+-- closes, so without this the overview showed however many happened to exist —
+-- one, most of the time. Persistent keeps 1-5 alive and empty, which is also
+-- what waybar's persistent-workspaces already assumed.
+for i = 1, 5 do
+    hl.workspace_rule({ workspace = tostring(i), persistent = true })
+end
+
 hl.window_rule({
     name  = "no-gaps-f1",
     match = { float = false, workspace = "f[1]" },

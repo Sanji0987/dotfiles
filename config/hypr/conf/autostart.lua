@@ -9,6 +9,14 @@ hl.on("hyprland.start", function()
 	-- the single Quickshell process is replaced by four small daemons: it
 	-- hosted the bar, notifications, OSD and wallpaper in one PID, so a crash
 	-- or a qt6 bump took the whole desktop's UI with it
+	-- edited by claude opus 5
+	-- load out-of-tree plugins; without this hyprtasking is installed but not
+	-- in the compositor, and SUPER+G does nothing after a fresh login
+	--
+	-- Plugins are not loaded by the config — hyprpm holds the enabled set and
+	-- injects them. See conf/plugins.lua for the rebuild-after-upgrade trap.
+	hl.exec_cmd("hyprpm reload -n")
+
 	hl.exec_cmd("waybar")          -- bar
 	hl.exec_cmd("mako")            -- notifications
 	hl.exec_cmd("swayosd-server")  -- volume/media OSD

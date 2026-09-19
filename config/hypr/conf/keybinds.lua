@@ -47,6 +47,19 @@ for i = 1, 10 do
     hl.bind(mainMod .. " + SHIFT + " .. key, hl.dsp.window.move({ workspace = i }))
 end
 
+-- edited by claude opus 5
+-- workspace overview on SUPER+G, the chord KDE uses for the same thing
+--
+-- Wrapped in a closure rather than passed directly, and that matters: the
+-- plugin's dispatchers live at hl.plugin.hyprtasking.* and only exist once
+-- hyprpm has loaded it, which happens in conf/autostart.lua — after this file
+-- runs. Inside a function the lookup is deferred to keypress, so the bind
+-- registers at config load whether or not the plugin is up yet, and starts
+-- working the moment it is. Referencing it directly here would be nil at load.
+--
+-- "cursor" toggles the overview on the monitor under the pointer.
+hl.bind(mainMod .. " + G", function() hl.plugin.hyprtasking.toggle("cursor") end)
+
 hl.bind(mainMod .. " + S",         hl.dsp.workspace.toggle_special("magic"))
 -- edited by claude opus 5
 -- moved off SHIFT+S, which is the region screenshot now; SUPER+S is untouched
