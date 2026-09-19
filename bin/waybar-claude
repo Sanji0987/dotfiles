@@ -20,6 +20,7 @@ reading the same file.
 from __future__ import annotations
 
 import datetime as dt
+import html
 import json
 import os
 import subprocess
@@ -105,6 +106,103 @@ def pick_primary(limits: list[dict]) -> dict | None:
     return limits[0] if limits else None
 
 
+# --- panel rendering ----------------------------------------------------
+#
+# Waybar has no dropdown, so the tooltip is the panel. The shape copies the
+# Quickshell shell's flyouts, whose theme file specified: a near-opaque
+# background (alpha 0.97), a one-pixel border, and interior rows carrying a
+# 4% fill behind a 40%-alpha hairline. The border and background are done in
+# style.css; the row layout is here.
+#
+# Pango markup, which GTK renders in tooltips. Meters are drawn with box
+# characters inside <tt> so the columns line up under a proportional font.
+
+C_TEXT = "#dedede"
+C_MUTED = "#7e7e7e"
+C_BRIGHT = "#ffffff"
+C_TRACK = "#3a3a3a"
+C_RED = "#e05561"
+
+METER_W = 24
+BAR_CHAR = "\u2501"  # heavy horizontal
+RULE_CHAR = "\u2500"  # light horizontal
+
+
+def span(text: str, colour: str = "", weight: str = "") -> str:
+    attrs = ""
+    if colour:
+        attrs += f" foreground='{colour}'"
+    if weight:
+        attrs += f" weight='{weight}'"
+    return f"<span{attrs}>{text}</span>"
+
+
+def meter(fraction: float) -> str:
+    """A thin two-tone bar. Filled portion takes the severity colour."""
+    fraction = max(0.0, min(1.0, fraction))
+    filled = round(fraction * METER_W)
+    # Never show an empty bar for a non-zero value: at 1% the meter should
+    # still say "something", or the row reads as unused.
+    if filled == 0 and fraction > 0:
+        filled = 1
+    colour = C_RED if fraction >= CRITICAL_AT else C_BRIGHT
+    return (
+        "<tt>"
+        + span(BAR_CHAR * filled, colour)
+        + span(BAR_CHAR * (METER_W - filled), C_TRACK)
+        + "</tt>"
+    )
+
+
+def build_panel(record: dict, limits: list[dict]) -> list[str]:
+    esc = html.escape
+    rule = span("<tt>" + RULE_CHAR * 34 + "</tt>", C_TRACK)
+
+    tier = record.get("tierLabel")
+    head = span("Claude Code", C_BRIGHT, "bold")
+    if tier:
+        head += "   " + span(esc(str(tier)), C_MUTED)
+    lines = [head, rule]
+
+    if not record.get("ready", True) and record.get("authHelpText"):
+        lines.append(span(esc(str(record["authHelpText"])), C_MUTED))
+        lines.append(rule)
+
+    for limit in limits:
+        pct = limit.get("percent")
+        label = esc(str(limit.get("title") or limit.get("label") or "limit"))
+        if isinstance(pct, (int, float)):
+            fraction = float(pct)
+            lines.append(
+                span(label, C_TEXT) + "   " + span(f"{fraction * 100:.0f}%", C_BRIGHT, "bold")
+            )
+            row = meter(fraction)
+        else:
+            lines.append(span(label, C_TEXT) + "   " + span("--", C_MUTED))
+            row = meter(0.0)
+        left = resets_in(str(limit.get("resetsAt", "")))
+        if left:
+            row += "  " + span(f"resets in {left}", C_MUTED)
+        lines.append(row)
+        lines.append("")
+
+    if lines and lines[-1] == "":
+        lines.pop()
+
+    prompts = record.get("todayPrompts")
+    tokens = record.get("todayTotalTokens")
+    bits = []
+    if prompts is not None:
+        bits.append(f"{prompts} prompts")
+    if isinstance(tokens, (int, float)) and tokens:
+        bits.append(f"{tokens / 1e6:.1f}M tokens")
+    if bits:
+        lines.append(rule)
+        lines.append(span("Today", C_MUTED) + "   " + span(" \u00b7 ".join(bits), C_TEXT))
+
+    return lines
+
+
 def main() -> int:
     refresh_if_stale(STATE)
 
@@ -120,28 +218,7 @@ def main() -> int:
     limits = [l for l in record.get("limits", []) if isinstance(l, dict)]
     primary = pick_primary(limits)
 
-    lines = [f"Claude Code — {record.get('tierLabel') or 'unknown tier'}"]
-    if not record.get("ready", True) and record.get("authHelpText"):
-        lines.append(str(record["authHelpText"]))
-    lines.append("")
-
-    for limit in limits:
-        pct = limit.get("percent")
-        shown = f"{float(pct) * 100:.0f}%" if isinstance(pct, (int, float)) else "--"
-        left = resets_in(str(limit.get("resetsAt", "")))
-        label = limit.get("title") or limit.get("label") or "limit"
-        lines.append(f"{label}: {shown}" + (f"  (resets in {left})" if left else ""))
-
-    today_prompts = record.get("todayPrompts")
-    today_tokens = record.get("todayTotalTokens")
-    if today_prompts is not None or today_tokens is not None:
-        lines.append("")
-        bits = []
-        if today_prompts is not None:
-            bits.append(f"{today_prompts} prompts")
-        if isinstance(today_tokens, (int, float)) and today_tokens:
-            bits.append(f"{today_tokens / 1e6:.1f}M tokens")
-        lines.append("Today: " + ", ".join(bits))
+    lines = build_panel(record, limits)
 
     if primary is None or not isinstance(primary.get("percent"), (int, float)):
         emit(f"{ICON} --", "\n".join(lines))

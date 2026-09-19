@@ -12,8 +12,13 @@
 {
   "layer": "top",
   "position": "top",
-  "height": 34,
-  "spacing": 4,
+  // 30px at 12px type. The reference bar is 42, but that is sized around a
+  // display notch it has to clear; there is none here.
+  "height": 30,
+  // 0: spacing between modules is set per-module in style.css as margins, the
+  // way the reference stylesheet does it. A bar-wide spacing on top of that
+  // double-spaces everything.
+  "spacing": 0,
 
   "modules-left": [
     "custom/launcher",
@@ -21,18 +26,18 @@
     "hyprland/window"
   ],
 
-  "modules-center": [
-    "clock",
-    "custom/weather"
-  ],
+  // No centre group: the reference bar puts the clock on the right and leaves
+  // the middle empty, which is what makes the window title on the left
+  // readable as the focus of the bar.
+  "modules-center": [],
 
   "modules-right": [
     "mpris",
     "custom/claude",
     "tray",
-    "bluetooth",
     "network",
     "pulseaudio",
+    "clock",
     "custom/power"
   ],
 
@@ -42,13 +47,14 @@
     "on-click": "pkill -x rofi || rofi -show drun"
   },
 
+  // Numbers, not dots. The reference bar shows per-workspace app icons, but
+  // plain ids are what is actually wanted here and they stay readable at 11px.
   "hyprland/workspaces": {
-    "format": "{icon}",
-    "format-icons": {
-      "default": "",
-      "active": "",
-      "empty": ""
-    },
+    "format": "{id}",
+    // edited by claude opus 5
+    // without an explicit on-click the buttons render but do nothing: waybar
+    // does not bind workspace activation by default
+    "on-click": "activate",
     "persistent-workspaces": {
       "*": 5
     }

@@ -5,28 +5,25 @@ local c = require("conf.colors")
 local t = require("conf.palette")
 
 -- edited by claude opus 5
--- accent fading into the theme background: reads as a sheen on every theme,
--- including the monochrome ones, where a second hue would clash
-local border_active = {
-    colors = { t.accent, t.mix(t.accent, t.background, 0.62) },
-    angle  = 45,
-}
-
--- edited by claude opus 5
--- inactive is a flat, barely-there lift off the background rather than black
-local border_inactive = t.rgba(t.mix(t.background, t.foreground, 0.14), "ff")
+-- flat greys, not an accent gradient: the reference look carries focus with a
+-- brightness step between two neutrals, so nothing competes with the wallpaper
+local border_active   = t.rgba(t.border_active, "ff")
+local border_inactive = t.rgba(t.border_inactive, "ff")
 
 hl.config({
     general = {
         -- edited by claude opus 5
-        -- gaps_in applies to each side, so 4 shows 8px between two windows and
-        -- matches the 8px to the screen edge: one spacing everywhere
+        -- 4/12 matches the reference look: a tight seam between windows and a
+        -- wider margin to the screen edge, so the tiling reads as cards on a
+        -- wallpaper rather than panes in a frame
         gaps_in  = 4,
-        gaps_out = 8,
+        gaps_out = 12,
 
         -- edited by claude opus 5
-        -- 1px of pure black read as no border at all; 2px is visible, not chunky
-        border_size = 2,
+        -- back to 1px. 2px was right when the border was near-black and needed
+        -- the weight; against the 707070/393939 greys a hairline is enough and
+        -- a thick edge looks drawn-on
+        border_size = 1,
 
         col = {
             -- edited by claude opus 5
@@ -43,40 +40,48 @@ hl.config({
         layout        = "dwindle",
     },
 
+    -- edited by claude opus 5
+    -- the whole decoration block is retuned to the reference look, which is
+    -- quieter than what was here: nothing dims, nothing fades, and the only
+    -- effect is a wide soft blur
     decoration = {
-        rounding       = 0,
+        rounding       = 10,
         rounding_power = 2,
 
+        -- Windows are fully opaque. The reference desktop gets its depth from
+        -- blur on the *shell* surfaces, not from see-through windows — and
+        -- translucent app windows over a busy wallpaper is what made the old
+        -- 0.93/0.92 look muddy rather than glassy.
         active_opacity     = 1.0,
-        inactive_opacity   = 0.94,
+        inactive_opacity   = 1.0,
         fullscreen_opacity = 1.0,
 
-        dim_inactive = true,
-        dim_strength = 0.08,
-        dim_special  = 0.3,
+        -- Focus is carried by the border greys alone. Dimming on top of that
+        -- reads as two competing signals for the same thing.
+        dim_inactive = false,
 
+        -- No shadow. At 1px borders and 10px rounding a drop shadow just
+        -- muddies the gap between windows.
         shadow = {
-            enabled        = true,
-            range          = 12,
-            render_power   = 3,
-            offset         = { 0, 2 },
-            scale          = 0.97,
-            color          = "rgba(" .. c.black .. "b0)",
-            color_inactive = "rgba(" .. c.black .. "60)",
+            enabled = false,
         },
 
+        -- A wide, soft, neutral blur. size 12 is the reference value: large
+        -- enough that the wallpaper behind a panel becomes colour rather than
+        -- shapes. Brightness and contrast sit at 1.0 — the previous 1.1/1.1
+        -- lifted everything toward grey, and 0.72 before that crushed it.
         blur = {
             enabled            = true,
-            size               = 6,
+            size               = 12,
             passes             = 3,
             new_optimizations  = true,
             xray               = false,
             ignore_opacity     = true,
-            noise              = 0.008,
-            contrast           = 0.95,
-            brightness         = 0.72,
+            noise              = 0.012,
+            contrast           = 1.0,
+            brightness         = 1.0,
             vibrancy           = 0.18,
-            vibrancy_darkness  = 0.2,
+            vibrancy_darkness  = 0.0,
             popups             = true,
             popups_ignorealpha = 0.4,
         },
@@ -110,11 +115,19 @@ hl.config({
 })
 
 -- edited by claude opus 5
--- the override is named directly: there is no omarchy theme slug to look up
--- any more, and the look is a fixed choice rather than a tracked theme
+-- rainynight kept as a switchable look rather than deleted, so going back is
+-- uncommenting one line
 --
--- The per-theme look override merges over everything above; see
--- conf/themes/rainynight.lua for why its values live in this repo rather than
--- being loaded out of a theme. To go back to the base look, comment this out;
--- to try another, add conf/themes/<name>.lua and require that instead.
-require("conf.themes.rainynight")
+-- Everything above is the active look: the neutral "glass" one. An override
+-- file merges over it, so a look only has to state what it changes.
+--
+--   conf/themes/rainynight.lua   rounding 14, 0.93/0.92 opacity, indigo
+--                                borders, a near-zero blur — the Catppuccin
+--                                -derived look this desktop used before
+--
+-- To switch, uncomment the require below and run `hyprctl reload`. Note the
+-- rest of the desktop does NOT follow: the bar, launcher, notifications, OSD
+-- and terminal carry their own copies of the palette (see README.md), so a
+-- full switch means changing those too.
+--
+-- require("conf.themes.rainynight")

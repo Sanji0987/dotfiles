@@ -1,0 +1,71 @@
+/* swayosd — the volume / media / caps-lock HUD.
+ *
+ * Unstyled until now, which meant stock GTK grey sitting under a desktop that
+ * is otherwise all neutral glass. This matches it to the bar and the launcher:
+ * near-black at 80% carried by alpha, one hairline, and a fully rounded pill.
+ *
+ * Shape is the reference desktop's: a wide pill rather than the rounded square
+ * macOS uses, because swayosd lays its icon and bar out horizontally and a
+ * square leaves the ends empty.
+ *
+ * Frosted by the compositor — conf/rules.lua blurs the `swayosd` layer.
+ *
+ * Same palette as config/waybar/style.css, config/rofi/spotlight.rasi,
+ * config/mako/config and config/hypr/conf/palette.lua. Edit together.
+ */
+
+window#osd {
+  padding: 12px 20px;
+  border: 1px solid rgba(112, 112, 112, 0.35);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.8);
+}
+
+window#osd #container {
+  margin: 14px;
+}
+
+window#osd image,
+window#osd label {
+  color: #dedede;
+}
+
+window#osd label {
+  font-family: "Inter";
+  font-size: 12px;
+}
+
+window#osd progressbar:disabled,
+window#osd image:disabled {
+  opacity: 0.5;
+}
+
+/* A thin bar, not a chunky one — the value is secondary to the icon. */
+window#osd progressbar {
+  min-height: 5px;
+  border-radius: 999px;
+  background: transparent;
+  border: none;
+}
+
+/* Explicit sizes rather than `inherit`, which resolved oddly on these nodes.
+ *
+ * swayosd logs `GtkGizmo (progress) reported min width -1` on every OSD. That
+ * is upstream's, not this file's: it appears identically with no user CSS at
+ * all (`swayosd-server --config /dev/null`). Harmless, and not worth
+ * contorting the stylesheet to silence. */
+window#osd trough {
+  min-height: 5px;
+  min-width: 1px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(222, 222, 222, 0.28);
+}
+
+window#osd progress {
+  min-height: 5px;
+  min-width: 1px;
+  border-radius: 999px;
+  border: none;
+  background: #dedede;
+}

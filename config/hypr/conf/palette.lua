@@ -1,23 +1,28 @@
 -- The desktop palette, and the two helpers that shape it into Hyprland's
 -- colour forms.
 --
--- This replaces conf/omarchy.lua, which parsed these three values out of the
--- active Omarchy theme's colors.toml at config-load time so that a theme
--- switch recoloured the borders for free. That pipeline is gone: there is no
--- theme state to read, no slug to look up, and no reload hook behind it. The
--- values are rainynight's, written out where they can be seen and edited.
+-- edited by claude opus 5
+-- repalletted to the reference desktop's neutral scheme: near-black surfaces
+-- carried by alpha rather than by hue, grey hairline borders, and one
+-- saturated blue used only for selection
 --
--- Change a colour here and the same one in config/mako/config,
--- config/hypr/hyprlock.conf and config/waybar/style.css — those four are the
--- whole palette surface now, and nothing keeps them in step but this comment.
+-- The look this desktop targets is deliberately colourless. Surfaces are black
+-- at low opacity so the wallpaper supplies whatever colour there is, borders
+-- are two greys apart (`707070` focused, `393939` not), and the only chroma is
+-- the selection blue. That is why there is no second hue here: adding one
+-- would fight the wallpaper instead of sitting on it.
 --
--- The mix/rgba helpers are kept unchanged: they are plain colour arithmetic
--- and conf/theme.lua still derives its border shades with them.
+-- The same values appear in config/waybar/style.css, config/rofi/spotlight.rasi,
+-- config/mako/config and config/hypr/hyprlock.conf. Edit them together;
+-- nothing keeps them in step.
 
 local M = {
-    accent     = "#89b4fa",
-    background = "#1e1e2e",
-    foreground = "#cdd6f4",
+    accent     = "#0860f2",  -- selection only
+    background = "#000000",  -- surfaces, always via alpha
+    foreground = "#dedede",
+
+    border_active   = "#707070",
+    border_inactive = "#393939",
 }
 
 local function channels(hex)

@@ -1,31 +1,37 @@
 /* Spotlight-style rofi theme.
  *
- * Adapted from LR-Tech's macOS-Spotlight theme by way of KZDKM's dotfiles,
- * which is where the look this desktop is aiming at comes from. Changed here:
- * the palette is rainynight's rather than the original's blue, and the
- * original's HiDPI-era sizes are dropped — this is one 1920x1080 display at
- * scale 1, so 640px wide is right without scaling.
+ * edited by claude opus 5
+ * rebuilt to the reference theme's actual numbers. The previous version used
+ * the old indigo palette at a 14px radius, which made it a small dark box; the
+ * reference is a wide, very transparent, heavily rounded sheet that leans on
+ * the compositor's blur for legibility.
  *
- * Colours are the same palette as config/hypr/conf/palette.lua,
- * config/mako/config, config/waybar/style.css and hyprlock.conf. Edit
- * together; nothing syncs them.
+ * Lineage: LR-Tech's macOS-Spotlight theme by way of KZDKM's dotfiles. Kept
+ * from it: 640px wide, 24px radius, a single grey hairline, 20px input type
+ * over 12px rows, and a selection that darkens and bolds rather than
+ * colouring. Changed: the HiDPI sizing is dropped — one 1920x1080 display at
+ * scale 1 — and the prompt is a glyph rather than a themed icon, so it does
+ * not depend on an icon theme shipping "search".
  *
- * The window background carries alpha so Hyprland's blur layer rule for the
- * rofi namespace has something to work with — without the rule this reads as
- * plain translucency, with it as frosted glass.
+ * The background is #00000033: almost clear. It is readable only because
+ * conf/rules.lua blurs the `rofi` layer. Raising the alpha here to "fix"
+ * legibility is the wrong lever — it kills the glass.
+ *
+ * Same palette as config/waybar/style.css, config/mako/config and
+ * config/hypr/conf/palette.lua. Edit together.
  */
 
 * {
     font-family: "Inter";
 
-    bg0:  #1e1e2ee0;   /* window: the blur sits behind this          */
-    bg1:  #45475a80;   /* hairlines and separators                   */
-    bg2:  #89b4fa26;   /* selected row                               */
+    bg0:  #00000033;   /* the sheet: nearly clear, blurred by the compositor */
+    bg1:  #7e7e7e80;   /* hairlines                                          */
+    bg2:  #00000055;   /* selected row                                       */
 
-    fg0:  #cdd6f4;     /* normal text                                */
-    fg1:  #ffffff;     /* selected text                              */
-    fg2:  #cdd6f480;   /* placeholder, inactive                      */
-    fg3:  #89b4fa;     /* accent                                     */
+    fg0:  #dedede;     /* normal text                                        */
+    fg1:  #ffffff;     /* selected text                                      */
+    fg2:  #dedede80;   /* placeholder                                        */
+    fg3:  #0860f2;     /* running / active entries                           */
 
     background-color: transparent;
     text-color:       @fg0;
@@ -42,11 +48,15 @@ window {
     width:         640;
     border:        1px solid;
     border-color:  @bg1;
-    border-radius: 14px;   /* matches Hyprland decoration:rounding */
+    border-radius: 24px;
 }
 
+/* edited by claude opus 5
+ * search field dropped from 20 to 14: 20 is the reference's HiDPI size and at
+ * scale 1 it towered over the 12px result rows. The results keep their own
+ * size — only this bar changed. */
 inputbar {
-    font:     "Inter 18";
+    font:     "Inter 14";
     padding:  14px 16px;
     spacing:  12px;
     children: [ prompt, entry ];
@@ -55,7 +65,7 @@ inputbar {
 prompt {
     enabled:    true;
     expand:     false;
-    text-color: @fg3;
+    text-color: @fg2;
     str:        "";
 }
 
@@ -70,29 +80,26 @@ entry {
 }
 
 message {
-    border:           1px 0 0;
-    border-color:     @bg1;
-    background-color: transparent;
+    border:       1px 0 0;
+    border-color: @bg1;
 }
 
 textbox {
-    padding: 10px 16px;
+    padding: 8px 24px;
 }
 
 listview {
-    lines:         8;
-    columns:       1;
-    fixed-height:  false;
-    border:        1px 0 0;
-    border-color:  @bg1;
-    scrollbar:     false;
+    lines:        10;
+    columns:      1;
+    fixed-height: false;
+    border:       1px 0 0;
+    border-color: @bg1;
+    scrollbar:    false;
 }
 
 element {
-    padding:          9px 16px;
-    spacing:          14px;
-    background-color: transparent;
-    border-radius:    8px;
+    padding: 8px 16px;
+    spacing: 16px;
 }
 
 element normal active {
@@ -105,7 +112,7 @@ element selected normal, element selected active {
 }
 
 element-icon {
-    size: 1.1em;
+    size: 1em;
 }
 
 element-text {

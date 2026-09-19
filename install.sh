@@ -39,7 +39,7 @@ link() { # $1 = repo-relative source, $2 = absolute destination
 # dropped walker, elephant and omarchy: the Quickshell shell and the walker
 # launcher are gone, rofi and the four daemons replace them
 for d in hypr kitty nvim fish tmux alacritty \
-         btop fontconfig uwsm waybar fastfetch cava mako rofi; do
+         btop fontconfig uwsm waybar fastfetch cava mako rofi swayosd; do
   link "config/$d" "$HOME/.config/$d"
 done
 link "config/libinput-gestures.conf" "$HOME/.config/libinput-gestures.conf"
