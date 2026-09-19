@@ -8,22 +8,32 @@ local t = require("conf.palette")
 -- white at low alpha instead of solid grey: the edge now picks up the
 -- wallpaper behind it rather than sitting on top as a drawn line
 --
--- ── BORDERS ── 59 = 35% opaque, 1a = 10%. Raise the first if the focused
--- window is hard to pick out; the inactive one is meant to be near-invisible.
-local border_active   = t.rgba(t.border_active,   "59")
-local border_inactive = t.rgba(t.border_inactive, "1a")
+-- edited by claude opus 5
+-- borders made fainter: 35% -> 22% active, 10% -> 6% inactive
+--
+-- ── BORDERS ── border_size is already 1, which is the minimum — the only
+-- thing below it is 0, i.e. no border at all. So "smaller" here can only mean
+-- fainter, and these two alphas are the control: 38 = 22% opaque, 0f = 6%.
+-- Raise the first if the focused window becomes hard to pick out; set
+-- border_size = 0 below if you want none at all.
+local border_active   = t.rgba(t.border_active,   "38")
+local border_inactive = t.rgba(t.border_inactive, "0f")
 
 hl.config({
     general = {
         -- edited by claude opus 5
-        -- inner gap 4 -> 6 so the wallpaper actually shows between windows
+        -- tightened: 6/12 -> 3/7, a more compact layout with less wallpaper
         --
-        -- ── GAPS ── gaps_in is applied to EACH side, so 6 puts 12px between
-        -- two windows and matches the 12px to the screen edge: one consistent
-        -- spacing everywhere. Raising gaps_in also gives the window shadows
-        -- more room to be seen — the two settings are worth tuning together.
-        gaps_in  = 6,
-        gaps_out = 12,
+        -- ── GAPS ── gaps_in is applied to EACH side, so 3 puts 6px between
+        -- two windows; 7 to the screen edge keeps the outer margin marginally
+        -- wider than the inner seam, which stops the tiling looking like it is
+        -- falling off the display.
+        --
+        -- These interact with the shadow below: a shadow only has the gap to
+        -- be seen in before the neighbouring window covers it, so shrinking
+        -- gaps means shrinking shadow range too, or the seams turn to mud.
+        gaps_in  = 3,
+        gaps_out = 7,
 
         -- edited by claude opus 5
         -- back to 1px. 2px was right when the border was near-black and needed
@@ -72,18 +82,20 @@ hl.config({
         --
         -- ── SHADOWS ── tweak these four numbers, nothing else matters here
         --
-        -- Sized for THIS layout, not for a floating WM. gaps_in is 4, so a
-        -- shadow only has 4px of gap to live in before the neighbouring window
-        -- covers it; the reference desktop uses range 4 for exactly that
-        -- reason. 14 is a deliberate compromise — wide enough that a floating
-        -- window visibly lifts off the tiled ones underneath, tight enough
-        -- that it does not turn every seam into a grey smear.
+        -- Sized for THIS layout, not for a floating WM. gaps_in is 3, so a
+        -- shadow has only 6px between two windows to live in before the
+        -- neighbour covers it; the reference desktop uses range 4 for exactly
+        -- that reason. 9 is the compromise — enough that a floating window
+        -- lifts off the tiled ones, tight enough not to smear every seam.
         --
-        -- Go bigger only if you also raise gaps_in. A 30px shadow with a 4px
-        -- gap is mud, which is what "large diffuse shadows" would have given.
+        -- Range tracks gaps. Raise one and raise the other, or a wide shadow
+        -- in a narrow gap just turns the seams to mud.
         shadow = {
             enabled      = true,
-            range        = 14,
+            -- edited by claude opus 5
+            -- 14 -> 9, following the gaps down: at gaps_in 3 there is only 6px
+            -- between windows for a shadow to live in
+            range        = 9,
             render_power = 3,
             -- Slight downward offset: light from above, the way every
             -- desktop that copies macOS does it.
