@@ -40,9 +40,9 @@ link() { # $1 = repo-relative source, $2 = absolute destination
 # edited by claude opus 5
 # added fastfetch and cava so their new configs get symlinked like every other
 # edited by claude opus 5
-# dropped mako: uninstalled, the shell serves notifications now
+# mako is back: it serves notifications again now the shell is being retired
 for d in hypr kitty nvim walker elephant omarchy fish tmux alacritty \
-         btop fontconfig uwsm waybar fastfetch cava; do
+         btop fontconfig uwsm waybar fastfetch cava mako; do
   link "config/$d" "$HOME/.config/$d"
 done
 link "config/libinput-gestures.conf" "$HOME/.config/libinput-gestures.conf"

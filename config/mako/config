@@ -1,0 +1,54 @@
+# ~/.config/mako/config
+#
+# Hand-maintained. Colours are written here as literals, not sourced from a
+# theme pipeline: this file is the whole truth about how notifications look.
+# The palette is rainynight's (background #1e1e2e, text #cdd6f4, accent
+# #89b4fa, critical #f38ba8), the same one conf/colors.lua carries for
+# Hyprland, so the two stay in step by being edited together.
+#
+# Geometry follows the desktop rather than mako's defaults: border-radius 14
+# matches Hyprland's window rounding, and the background carries an alpha so
+# the compositor's blur rule for the mako layer has something to work with.
+
+font=Inter 10
+
+background-color=#1e1e2ee6
+text-color=#cdd6f4
+border-color=#45475aff
+progress-color=over #89b4fa
+
+border-size=1
+border-radius=14
+padding=12,16
+margin=8
+width=380
+height=160
+icon-location=left
+max-icon-size=40
+
+default-timeout=5000
+ignore-timeout=0
+layer=overlay
+anchor=top-right
+outer-margin=10
+max-visible=5
+group-by=app-name
+
+[urgency=low]
+text-color=#a6adc8
+border-color=#313244ff
+default-timeout=3000
+
+[urgency=normal]
+border-color=#45475aff
+
+[urgency=critical]
+text-color=#f5e0dc
+border-color=#f38ba8ff
+default-timeout=0
+
+[mode=do-not-disturb]
+invisible=1
+
+[mode=do-not-disturb app-name=notify-send]
+invisible=0
