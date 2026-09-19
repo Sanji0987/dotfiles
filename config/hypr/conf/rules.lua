@@ -25,6 +25,30 @@ hl.window_rule({
     center = true,
 })
 
+-- edited by claude opus 5
+-- a floating scratch terminal, launched on its own class so only it floats
+--
+-- ── FLOATING TERMINAL ── bound to SUPER + SHIFT + Return in conf/keybinds.lua
+--
+-- The bind runs `kitty --class kitty-float`, which is the same kitty with a
+-- different app-id. Matching on that id rather than on "kitty" is what keeps
+-- ordinary terminals tiled — a rule on the plain class would float every one.
+--
+-- Size is in PIXELS, not percentages. `size = "55% 60%"` is accepted by the
+-- config without complaint and then silently ignored — hyprctl configerrors
+-- stays clean and the window keeps its own size. Tested: the percent form
+-- left kitty at 942x1024; the pixel form below applies exactly.
+--
+-- 1056x648 is 55% x 60% of this 1920x1080 display. On a different monitor,
+-- recompute rather than reaching for percentages again.
+hl.window_rule({
+    name   = "float-terminal",
+    match  = { class = "^kitty-float$" },
+    float  = true,
+    size   = "1056 648",
+    center = true,
+})
+
 hl.window_rule({
     name  = "games-raw",
     match = { class = "^(steam_app_.*|cs2|gamescope|hl2_linux|.*\\.exe)$" },

@@ -44,8 +44,19 @@
   border-radius: 0;
 }
 
+/* edited by claude opus 5
+ * bar wash dropped 0.25 -> 0.10 so the modules read as separate pieces
+ *
+ * At 0.25 the background fused everything into one continuous bar. The
+ * reference uses ~0.10, which over a dark desktop is almost invisible — so
+ * what you see is the workspaces pill and the media chip floating, with bare
+ * text between them, not a bar.
+ *
+ * 0.10 is also below the layer rule's ignore_alpha (0.2), so the bar ground
+ * itself is deliberately NOT blurred; only the pills, which sit at 0.55, are.
+ * That is what separates them visually. */
 window#waybar {
-  background: alpha(@background, 0.25);
+  background: alpha(@background, 0.10);
   color: @foreground;
 }
 
@@ -68,11 +79,13 @@ window#waybar {
 }
 
 /* One of the two bordered surfaces on the bar. */
+/* edited by claude opus 5
+ * tighter vertical margins to suit the 26px bar */
 #workspaces {
   background: alpha(@surface, 0.55);
   border: 1px solid alpha(@border_lit, 0.45);
-  border-radius: 8px;
-  margin: 0.4em 0.6em;
+  border-radius: 7px;
+  margin: 0.25em 0.6em;
   padding: 0 0.3em;
 }
 
@@ -121,15 +134,15 @@ window#waybar {
 #mpris {
   font-size: 10px;
   padding: 0 0.6em;
-  border-radius: 10px;
-  margin: 0.6em 0.3em;
+  border-radius: 8px;
+  margin: 0.35em 0.3em;
   background: alpha(@surface, 0.5);
   border: 1px solid alpha(@border_lit, 0.4);
   color: @foreground;
 }
 
 #mpris.paused {
-  margin: 0.6em 0;
+  margin: 0.35em 0;
   background: transparent;
   border: none;
   color: @muted;
@@ -140,8 +153,8 @@ window#waybar {
 #custom-claude {
   font-size: 10px;
   padding: 0 0.6em;
-  border-radius: 10px;
-  margin: 0.6em 0.3em;
+  border-radius: 8px;
+  margin: 0.35em 0.3em;
   background: alpha(@surface, 0.5);
   border: 1px solid alpha(@border_lit, 0.4);
   color: @foreground;

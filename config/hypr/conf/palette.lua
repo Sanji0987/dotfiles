@@ -21,8 +21,16 @@ local M = {
     background = "#000000",  -- surfaces, always via alpha
     foreground = "#dedede",
 
-    border_active   = "#707070",
-    border_inactive = "#393939",
+    -- edited by claude opus 5
+    -- borders carry alpha now, so they pick up the wallpaper instead of
+    -- sitting on it as flat grey
+    --
+    -- These are used as WHITE AT LOW ALPHA (see conf/theme.lua), not as solid
+    -- greys. Over a coloured gradient a solid #707070 edge reads as a drawn-on
+    -- line; white at 35% picks up whatever is behind it, which is what makes a
+    -- macOS window edge look like a highlight rather than a stroke.
+    border_active   = "#ffffff",
+    border_inactive = "#ffffff",
 }
 
 local function channels(hex)

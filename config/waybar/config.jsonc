@@ -12,9 +12,14 @@
 {
   "layer": "top",
   "position": "top",
-  // 30px at 12px type. The reference bar is 42, but that is sized around a
-  // display notch it has to clear; there is none here.
-  "height": 30,
+  // edited by claude opus 5
+  // 30 -> 26: thin, close to a macOS menu bar. The reference is 42, but that
+  // is sized around a display notch it has to clear; there is none here.
+  //
+  // 26 is about the floor at 12px type — the pills carry 0.4em vertical
+  // margins, so going lower starts clipping them rather than thinning the bar.
+  // Drop the font size first if you want it tighter than this.
+  "height": 26,
   // 0: spacing between modules is set per-module in style.css as margins, the
   // way the reference stylesheet does it. A bar-wide spacing on top of that
   // double-spaces everything.
@@ -74,8 +79,11 @@
     }
   },
 
+  // edited by claude opus 5
+  // "Sat 19 Sep 14:56" — weekday, date, 24h. The reference uses the same
+  // shape ("April 10 Wednesday 22:59"); this is the shorter form.
   "clock": {
-    "format": "{:%I:%M %p}",
+    "format": "{:%a %d %b %H:%M}",
     "format-alt": "{:%-d %B 'W'%V %Y}",
     "on-click": "mode",
     "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>"

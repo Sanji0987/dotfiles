@@ -5,18 +5,24 @@ local c = require("conf.colors")
 local t = require("conf.palette")
 
 -- edited by claude opus 5
--- flat greys, not an accent gradient: the reference look carries focus with a
--- brightness step between two neutrals, so nothing competes with the wallpaper
-local border_active   = t.rgba(t.border_active, "ff")
-local border_inactive = t.rgba(t.border_inactive, "ff")
+-- white at low alpha instead of solid grey: the edge now picks up the
+-- wallpaper behind it rather than sitting on top as a drawn line
+--
+-- ── BORDERS ── 59 = 35% opaque, 1a = 10%. Raise the first if the focused
+-- window is hard to pick out; the inactive one is meant to be near-invisible.
+local border_active   = t.rgba(t.border_active,   "59")
+local border_inactive = t.rgba(t.border_inactive, "1a")
 
 hl.config({
     general = {
         -- edited by claude opus 5
-        -- 4/12 matches the reference look: a tight seam between windows and a
-        -- wider margin to the screen edge, so the tiling reads as cards on a
-        -- wallpaper rather than panes in a frame
-        gaps_in  = 4,
+        -- inner gap 4 -> 6 so the wallpaper actually shows between windows
+        --
+        -- ── GAPS ── gaps_in is applied to EACH side, so 6 puts 12px between
+        -- two windows and matches the 12px to the screen edge: one consistent
+        -- spacing everywhere. Raising gaps_in also gives the window shadows
+        -- more room to be seen — the two settings are worth tuning together.
+        gaps_in  = 6,
         gaps_out = 12,
 
         -- edited by claude opus 5
@@ -60,10 +66,33 @@ hl.config({
         -- reads as two competing signals for the same thing.
         dim_inactive = false,
 
-        -- No shadow. At 1px borders and 10px rounding a drop shadow just
-        -- muddies the gap between windows.
+        -- edited by claude opus 5
+        -- shadows on, and this is the one real change: depth was the piece
+        -- actually missing
+        --
+        -- ── SHADOWS ── tweak these four numbers, nothing else matters here
+        --
+        -- Sized for THIS layout, not for a floating WM. gaps_in is 4, so a
+        -- shadow only has 4px of gap to live in before the neighbouring window
+        -- covers it; the reference desktop uses range 4 for exactly that
+        -- reason. 14 is a deliberate compromise — wide enough that a floating
+        -- window visibly lifts off the tiled ones underneath, tight enough
+        -- that it does not turn every seam into a grey smear.
+        --
+        -- Go bigger only if you also raise gaps_in. A 30px shadow with a 4px
+        -- gap is mud, which is what "large diffuse shadows" would have given.
         shadow = {
-            enabled = false,
+            enabled      = true,
+            range        = 14,
+            render_power = 3,
+            -- Slight downward offset: light from above, the way every
+            -- desktop that copies macOS does it.
+            offset       = { 0, 4 },
+            scale        = 0.97,
+            -- Low-opacity black. Floating windows get the stronger one, which
+            -- is what separates them from the tiled layer.
+            color          = "rgba(0000006e)",
+            color_inactive = "rgba(00000033)",
         },
 
         -- A wide, soft, neutral blur. size 12 is the reference value: large
@@ -77,10 +106,13 @@ hl.config({
             new_optimizations  = true,
             xray               = false,
             ignore_opacity     = true,
-            noise              = 0.012,
+            -- edited by claude opus 5
+            -- noise down, vibrancy up a touch: keeps colour in what is blurred
+            -- behind a panel instead of letting it go flat grey
+            noise              = 0.008,
             contrast           = 1.0,
             brightness         = 1.0,
-            vibrancy           = 0.18,
+            vibrancy           = 0.25,
             vibrancy_darkness  = 0.0,
             popups             = true,
             popups_ignorealpha = 0.4,

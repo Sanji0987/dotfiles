@@ -2,6 +2,11 @@ local apps = require("conf.programs")
 local mainMod = "SUPER"
 
 hl.bind(mainMod .. " + return",    hl.dsp.exec_cmd(apps.terminal))
+-- edited by claude opus 5
+-- floating scratch terminal, to layer over tiled windows the way a macOS
+-- window does. The --class is what the float rule in conf/rules.lua matches;
+-- without it the rule would float every terminal.
+hl.bind(mainMod .. " + SHIFT + return", hl.dsp.exec_cmd(apps.terminal .. " --class kitty-float"))
 hl.bind(mainMod .. " + E",         hl.dsp.exec_cmd(apps.fileManager))
 -- edited by claude opus 5
 -- rofi toggles rather than stacking: pressing SUPER+Space with the launcher
