@@ -32,7 +32,8 @@
   "modules-center": [],
 
   "modules-right": [
-    "mpris",
+    "mpris#sidra",
+    "mpris#spotify",
     "custom/claude",
     "tray",
     "network",
@@ -86,7 +87,28 @@
     "tooltip": false
   },
 
-  "mpris": {
+  // edited by claude opus 5
+  // scoped to the music apps only. waybar's mpris module has no allowlist —
+  // `ignored-players` is a denylist, which would let any new player (mpv, vlc,
+  // a second browser) take the slot. Two instances, each pinned to one player,
+  // IS the allowlist: an instance whose player is not running renders nothing.
+  //
+  // Sidra registers on mpris as `sidra`. Spotify is not installed; its
+  // instance sits here inert so it works the moment it is.
+  "mpris#sidra": {
+    "player": "sidra",
+    "format": "{status_icon} {dynamic}",
+    "dynamic-order": ["title", "artist"],
+    "dynamic-len": 34,
+    "status-icons": {
+      "playing": "",
+      "paused": ""
+    },
+    "tooltip-format": "{player}: {title}\n{artist} — {album}"
+  },
+
+  "mpris#spotify": {
+    "player": "spotify",
     "format": "{status_icon} {dynamic}",
     "dynamic-order": ["title", "artist"],
     "dynamic-len": 34,
