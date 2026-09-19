@@ -17,7 +17,7 @@
 hl.config({
     general = {
         -- The theme's own border colours: muted indigo on near-black. This
-        -- overrides the accent gradient from conf/omarchy.lua for this theme
+        -- overrides the accent gradient from conf/palette.lua for this theme
         -- only -- delete this col block to get the gradient back here too.
         col = {
             active_border   = "rgb(303463)",

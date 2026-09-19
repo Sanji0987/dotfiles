@@ -1,7 +1,8 @@
 local c = require("conf.colors")
 -- edited by claude opus 5
--- window borders now follow the active Omarchy theme instead of the fixed palette
-local t = require("conf.omarchy")
+-- the palette is a static module now; conf/omarchy.lua read it out of the
+-- omarchy theme state, which no longer exists
+local t = require("conf.palette")
 
 -- edited by claude opus 5
 -- accent fading into the theme background: reads as a sheen on every theme,
@@ -109,12 +110,11 @@ hl.config({
 })
 
 -- edited by claude opus 5
--- a theme may override the look in conf/themes/<slug>.lua, merging over
--- everything above; see conf/themes/rainynight.lua for why these live here
--- rather than being loaded out of the theme itself
-if t.name then
-    local override = package.searchpath("conf.themes." .. t.name, package.path)
-    -- dofile, not pcall(require): a missing override is normal and silent,
-    -- but a broken one should still fail loudly instead of being swallowed
-    if override then dofile(override) end
-end
+-- the override is named directly: there is no omarchy theme slug to look up
+-- any more, and the look is a fixed choice rather than a tracked theme
+--
+-- The per-theme look override merges over everything above; see
+-- conf/themes/rainynight.lua for why its values live in this repo rather than
+-- being loaded out of a theme. To go back to the base look, comment this out;
+-- to try another, add conf/themes/<name>.lua and require that instead.
+require("conf.themes.rainynight")
