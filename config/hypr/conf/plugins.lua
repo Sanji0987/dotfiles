@@ -30,10 +30,19 @@
 hl.config({
     plugin = {
         hyprtasking = {
-            -- "linear" is the horizontal strip along the screen edge, which is
-            -- the layout the reference desktop uses. "grid" is a 3x3 of the
-            -- whole screen — more space per workspace, less like the target.
-            layout = "linear",
+            -- edited by claude opus 5
+            -- grid, not linear: the strip was clipped and unreadable
+            --
+            -- "linear" is the horizontal strip the reference desktop uses, and
+            -- it was tried first. On this 1920x1080 display it anchors to the
+            -- bottom edge and overflows it — only the top ~290px of each
+            -- thumbnail survives, under 785px of empty blurred backdrop. The
+            -- strip suits the reference's taller, scaled panel; it does not
+            -- suit this screen.
+            --
+            -- "grid" fills the screen instead, which is also what KDE's
+            -- overview does, and window contents are legible at this size.
+            layout = "grid",
 
             gap_size    = 12,
             border_size = 1,
@@ -51,8 +60,14 @@ hl.config({
             -- there, which is the whole point.
             exit_on_hovered = 1,
 
-            linear = {
-                height = 300,
+            -- 2x3 = six cells for five workspaces, so one sits empty.
+            -- Deliberate: five has no rectangle other than 1x5 or 5x1, and a
+            -- single row on a 1920px display puts each thumbnail at ~370px
+            -- wide — back to the unreadable sizes that made linear fail. A
+            -- spare cell costs nothing; illegible thumbnails cost the feature.
+            grid = {
+                rows = 2,
+                cols = 3,
             },
 
             gestures = {
