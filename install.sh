@@ -65,9 +65,12 @@ done
 # edited by claude opus 5
 # added the agent usage collectors and the waybar module that reads them,
 # rescued from the omarchy tree so the Claude usage indicator outlives the shell
+# edited by claude opus 5
+# dropped omarchy-sidra-theme-sync: Sidra's palette is a static file now, so
+# nothing regenerates it
 for b in hermes update-appimage env env.fish \
          omarchy omarchy-shell-run omarchy-walker-theme-sync \
-         omarchy-kitty-theme-sync omarchy-sidra-theme-sync \
+         omarchy-kitty-theme-sync \
          agent-usage-update agent-usage-claude agent-usage-codex \
          agent-usage-fireworks waybar-claude; do
   link "bin/$b" "$HOME/.local/bin/$b"

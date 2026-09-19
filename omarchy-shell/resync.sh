@@ -235,12 +235,10 @@ check_installed "$BIN_DIR/omarchy-walker-theme-sync"       "omarchy-walker-theme
 # edited by claude opus 5
 # the kitty palette is generated now, so its script and hook are load-bearing
 check_installed "$BIN_DIR/omarchy-kitty-theme-sync"        "omarchy-kitty-theme-sync"
-check_installed "$BIN_DIR/omarchy-sidra-theme-sync"        "omarchy-sidra-theme-sync"
 check_installed "$CONFIG_DIR/fontconfig.conf"              "fontconfig.conf"
 check_installed "$CONFIG_DIR/themed/walker.css.tpl"        "walker.css.tpl"
 check_installed "$CONFIG_DIR/hooks/theme-set.d/walker-css" "walker-css hook"
 check_installed "$CONFIG_DIR/hooks/theme-set.d/kitty-theme" "kitty-theme hook"
-check_installed "$CONFIG_DIR/hooks/theme-set.d/sidra-theme" "sidra-theme hook"
 if (( authored_missing )); then
   die "authored files are not installed — run $REPO_DIR/install.sh"
 fi
@@ -427,34 +425,6 @@ if [[ -x $KITTY_SYNC ]]; then
   else
     warn "omarchy-kitty-theme-sync failed"
     printf '%s\n' "$kitty_out" | sed 's/^/      /' >&2
-  fi
-fi
-
-# --------------------------------------------------------- 4e. sidra palette
-
-# edited by claude opus 5
-# Sidra's only extension point is a 12-slot JSON palette; generate it too
-#
-# Sidra is an Electron Apple Music client whose sole theming hook is a
-# custom-theme.json of twelve hex colour slots in its userData directory. It
-# watches that file, so this only has to write it -- no restart, no reload call.
-#
-# Unlike walker and kitty this is not conditional on a directory existing:
-# the script creates the userData dir if Sidra has never run, so the palette is
-# waiting when it first does.
-
-SIDRA_SYNC="$HOME/.local/bin/omarchy-sidra-theme-sync"
-
-if [[ -x $SIDRA_SYNC ]]; then
-  say "Syncing sidra palette"
-  if (( DRY_RUN )); then
-    dim "would run: $SIDRA_SYNC"
-  elif sidra_out=$("$SIDRA_SYNC" 2>&1); then
-    info "custom-theme.json rendered from current/theme/colors.toml"
-    [[ -n $sidra_out ]] && printf '%s\n' "$sidra_out" | sed 's/^/      /'
-  else
-    warn "omarchy-sidra-theme-sync failed"
-    printf '%s\n' "$sidra_out" | sed 's/^/      /' >&2
   fi
 fi
 
