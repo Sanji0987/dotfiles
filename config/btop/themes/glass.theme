@@ -1,0 +1,82 @@
+# ────────────────────────────────────────────────────────────
+# BTOP THEME — glass (neutral, matches the monochrome desktop)
+# ────────────────────────────────────────────────────────────
+#
+# Every value is a literal. Nothing generates this file.
+#
+# Same key set as rainynight.theme, no more and no less -- btop silently
+# ignores keys it does not know and falls back to its builtin for keys a theme
+# omits, so both mistakes are invisible until the UI looks wrong.
+#
+# The desktop this matches has no chroma. btop cannot go all the way there:
+# a gauge that is grey at 5% and grey at 95% conveys nothing. So the ramps run
+# dark grey → light grey, and the one hue in the file is the desktop red at the
+# top of the gauges where high actually means bad (cpu, temp, memory used).
+# Gauges where high is harmless (free, cached, available, net) ramp to white.
+
+# Background. theme_background = false in btop.conf, so this is mostly unused --
+# kitty's translucency shows through instead. Kept at kitty's background so the
+# two agree if that setting is ever flipped back on.
+theme[main_bg]="#101010"
+
+# Body text
+theme[main_fg]="#dedede"
+
+# Box titles — deliberately dimmer than the data they frame; labels are chrome
+theme[title]="#9e9e9e"
+
+# Keyboard-shortcut highlight — the brightest thing in the UI
+theme[hi_fg]="#ffffff"
+
+# Selected row — same selection pair as kitty, no accent hue
+theme[selected_bg]="#2a2a2a"
+theme[selected_fg]="#ffffff"
+
+# Inactive/dim text
+theme[inactive_fg]="#5e5e5e"
+
+# Misc process text
+theme[proc_misc]="#7e7e7e"
+
+# Box outlines — the desktop's unfocused border grey
+theme[cpu_box]="#393939"
+theme[mem_box]="#393939"
+theme[net_box]="#393939"
+theme[proc_box]="#393939"
+
+# Divider lines
+theme[div_line]="#2a2a2a"
+
+# ---- gauges where high means trouble: grey ramp topped with the desktop red
+theme[temp_start]="#4a4a4a"
+theme[temp_mid]="#b0b0b0"
+theme[temp_end]="#e05561"
+
+theme[cpu_start]="#4a4a4a"
+theme[cpu_mid]="#b0b0b0"
+theme[cpu_end]="#e05561"
+
+theme[used_start]="#4a4a4a"
+theme[used_mid]="#b0b0b0"
+theme[used_end]="#e05561"
+
+# ---- gauges where high is fine: grey ramp to white
+theme[free_start]="#4a4a4a"
+theme[free_mid]="#9e9e9e"
+theme[free_end]="#ffffff"
+
+theme[cached_start]="#4a4a4a"
+theme[cached_mid]="#9e9e9e"
+theme[cached_end]="#ffffff"
+
+theme[available_start]="#4a4a4a"
+theme[available_mid]="#9e9e9e"
+theme[available_end]="#ffffff"
+
+theme[download_start]="#4a4a4a"
+theme[download_mid]="#9e9e9e"
+theme[download_end]="#ffffff"
+
+theme[upload_start]="#4a4a4a"
+theme[upload_mid]="#9e9e9e"
+theme[upload_end]="#ffffff"
