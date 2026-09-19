@@ -1,9 +1,0 @@
-#!/bin/bash
-# Re-install the generated Walker stylesheet after a theme change.
-# $1 is the slugified theme name (unused — the generated file is already the
-# new theme by the time hooks run).
-#
-# NOTE: omarchy-theme-set:207 only runs hooks when OMARCHY_THEME_HEADLESS is
-# unset, so this fires for theme-switcher / omarchy-theme-set changes but NOT
-# for update.sh, which sets it. update.sh calls the same script directly.
-exec "$HOME/.local/bin/omarchy-walker-theme-sync"

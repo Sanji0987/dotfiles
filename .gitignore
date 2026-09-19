@@ -9,24 +9,10 @@ local/
 
 # machine state, not config
 config/fish/fish_variables
-omarchy-shell/state/
-
-# generated on every theme change (stage-2 render output)
-config/walker/themes/omarchy/style.css
 
 # edited by claude opus 5
-# kitty's palette is hand-maintained now, so it must be TRACKED, not ignored —
-# nothing regenerates it, and a fresh checkout needs it for the include to work
-
-# edited by claude sonnet 5
-# documented why waybar needs no ignore entry, so it is not added later by mistake
-# waybar has no equivalent entry here: config/waybar/style.css @imports
-# ~/.local/state/omarchy/current/theme/waybar.css directly, and that render
-# target sits entirely outside this repo (no symlinked config/waybar/* path
-# ever gets written to), so there is nothing generated inside the tree to
-# ignore.
-
-# third-party theme clones + wallpapers — installed once via
-# `omarchy-shell-update --theme <git-url>`, see omarchy-shell/NOTES.md
-config/omarchy/themes/
-config/omarchy/backgrounds/
+# everything below this line used to describe the omarchy theme pipeline: the
+# walker stage-2 render, the kitty palette that was generated rather than
+# written, the third-party theme clones, and a note explaining why waybar
+# needed no entry. None of it generates anything now — every palette in this
+# repo is a tracked, hand-maintained file — so there is nothing left to ignore.

@@ -35,41 +35,28 @@ link() { # $1 = repo-relative source, $2 = absolute destination
 }
 
 # ~/.config directories
-# edited by claude sonnet 5
-# added waybar so the fallback bar's config gets symlinked like every other
 # edited by claude opus 5
-# added fastfetch and cava so their new configs get symlinked like every other
-# edited by claude opus 5
-# mako is back: it serves notifications again now the shell is being retired
-for d in hypr kitty nvim walker elephant omarchy fish tmux alacritty \
+# dropped walker, elephant and omarchy: the Quickshell shell and the walker
+# launcher are gone, rofi and the four daemons replace them
+for d in hypr kitty nvim fish tmux alacritty \
          btop fontconfig uwsm waybar fastfetch cava mako rofi; do
   link "config/$d" "$HOME/.config/$d"
 done
 link "config/libinput-gestures.conf" "$HOME/.config/libinput-gestures.conf"
-
-# user services (enable with: systemctl --user enable --now <unit>)
-for u in walker.service elephant.service; do
-  link "config/systemd/user/$u" "$HOME/.config/systemd/user/$u"
-done
 
 # home dotfiles
 for f in .zshrc .p10k.zsh .bashrc .bash_profile .profile .gitconfig; do
   link "home/$f" "$HOME/$f"
 done
 
-# scripts. The omarchy three (launcher, CLI shim, walker theme sync) are ours
-# and are linked like anything else — resync.sh used to deploy them as copies,
-# which meant the deployed copy could silently drift from the repo.
+# scripts.
 # edited by claude opus 5
-# added the kitty and sidra theme syncs, called by theme-set.d hooks and resync.sh
+# the agent usage collectors and the waybar module that reads them, rescued
+# from the omarchy tree so the Claude usage indicator outlived the shell
 # edited by claude opus 5
-# added the agent usage collectors and the waybar module that reads them,
-# rescued from the omarchy tree so the Claude usage indicator outlives the shell
-# edited by claude opus 5
-# dropped the sidra and kitty theme syncs: both palettes are static files now,
-# so nothing regenerates them
+# dropped the omarchy launcher, CLI shim, walker/kitty/sidra theme syncs and
+# the resync entry point: the shell and its theme pipeline are gone
 for b in hermes update-appimage env env.fish \
-         omarchy omarchy-shell-run omarchy-walker-theme-sync \
          agent-usage-update agent-usage-claude agent-usage-codex \
          agent-usage-fireworks waybar-claude; do
   link "bin/$b" "$HOME/.local/bin/$b"
@@ -77,20 +64,8 @@ done
 
 link "help.sh" "$HOME/help.sh"
 
-# resync entry point on PATH
-link "omarchy-shell/resync.sh" "$HOME/.local/bin/omarchy-shell-update"
-
 echo
 echo "done: $ok in place, $skipped skipped"
 if (( skipped )); then
   echo "move the skipped obstacles aside and re-run"
 fi
-
-cat <<'EOF'
-
-Not handled by this script (see omarchy-shell/NOTES.md):
-  - ~/.local/share/omarchy — the vendored shell tree; restore from a backup
-  - omarchy-shell-update    — run once after the tree is in place; it installs
-                              the glyph font and regenerates the theme files
-  - third-party themes      — omarchy-shell-update --theme <git-url>
-EOF
