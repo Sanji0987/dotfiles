@@ -1,0 +1,158 @@
+#!/usr/bin/python3
+"""Waybar module: Claude Code usage, from the agent-usage collector's record.
+
+Prints one line of waybar JSON (return-type "json"):
+
+    text        the session (5-hour) limit as a percentage
+    tooltip     every limit window with its reset time, plus today's totals
+    class       ok | warning | critical, for the stylesheet to colour
+    percentage  the same session number, for waybar's own use
+
+Reads ~/.local/state/agent-usage/claude.json, which `agent-usage-update`
+writes. If that record is older than STALE_AFTER, a refresh is kicked off in
+the background and the current record is printed anyway — the collector talks
+to the network, and waybar must not block on it.
+
+This replaces the omarchy.agents Quickshell widget, which did the same job by
+reading the same file.
+"""
+
+from __future__ import annotations
+
+import datetime as dt
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+ICON = "\U000f05b0"  # nf-md-robot_outline
+STATE = Path(
+    os.environ.get("XDG_STATE_HOME") or Path.home() / ".local/state"
+) / "agent-usage/claude.json"
+UPDATER = "agent-usage-update"
+
+# The collector's own default refresh was 900s; don't re-hit the endpoint
+# more often than that.
+STALE_AFTER = dt.timedelta(seconds=900)
+
+WARNING_AT = 0.75
+CRITICAL_AT = 0.90
+
+# Which limit drives the bar text. The 5-hour session window is the one that
+# actually stops you working, so it wins over the weekly ones.
+PRIMARY_HINTS = ("session", "5-hour", "5 hour")
+
+
+def emit(text: str, tooltip: str, cls: str = "", percentage: int | None = None) -> None:
+    out: dict[str, object] = {"text": text, "tooltip": tooltip}
+    if cls:
+        out["class"] = cls
+    if percentage is not None:
+        out["percentage"] = percentage
+    json.dump(out, sys.stdout)
+    sys.stdout.write("\n")
+
+
+def refresh_if_stale(path: Path) -> None:
+    try:
+        age = dt.datetime.now() - dt.datetime.fromtimestamp(path.stat().st_mtime)
+    except OSError:
+        age = STALE_AFTER * 2
+    if age < STALE_AFTER:
+        return
+    try:
+        subprocess.Popen(
+            [UPDATER, "claude"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+    except (OSError, FileNotFoundError):
+        pass  # nothing to show for it; the stale record still renders
+
+
+def humanize(delta: dt.timedelta) -> str:
+    secs = int(delta.total_seconds())
+    if secs <= 0:
+        return "now"
+    days, secs = divmod(secs, 86400)
+    hours, secs = divmod(secs, 3600)
+    mins = secs // 60
+    if days:
+        return f"{days}d {hours}h"
+    if hours:
+        return f"{hours}h {mins}m"
+    return f"{mins}m"
+
+
+def resets_in(raw: str) -> str:
+    if not raw:
+        return ""
+    try:
+        when = dt.datetime.fromisoformat(raw)
+    except ValueError:
+        return ""
+    now = dt.datetime.now(dt.timezone.utc) if when.tzinfo else dt.datetime.now()
+    return humanize(when - now)
+
+
+def pick_primary(limits: list[dict]) -> dict | None:
+    for limit in limits:
+        label = str(limit.get("label", "")).lower()
+        if any(hint in label for hint in PRIMARY_HINTS):
+            return limit
+    return limits[0] if limits else None
+
+
+def main() -> int:
+    refresh_if_stale(STATE)
+
+    try:
+        record = json.loads(STATE.read_text())
+    except FileNotFoundError:
+        emit(f"{ICON} --", "No usage record yet.\nRun: agent-usage-update claude")
+        return 0
+    except (OSError, json.JSONDecodeError) as exc:
+        emit(f"{ICON} !?", f"Unreadable usage record:\n{exc}")
+        return 0
+
+    limits = [l for l in record.get("limits", []) if isinstance(l, dict)]
+    primary = pick_primary(limits)
+
+    lines = [f"Claude Code — {record.get('tierLabel') or 'unknown tier'}"]
+    if not record.get("ready", True) and record.get("authHelpText"):
+        lines.append(str(record["authHelpText"]))
+    lines.append("")
+
+    for limit in limits:
+        pct = limit.get("percent")
+        shown = f"{float(pct) * 100:.0f}%" if isinstance(pct, (int, float)) else "--"
+        left = resets_in(str(limit.get("resetsAt", "")))
+        label = limit.get("title") or limit.get("label") or "limit"
+        lines.append(f"{label}: {shown}" + (f"  (resets in {left})" if left else ""))
+
+    today_prompts = record.get("todayPrompts")
+    today_tokens = record.get("todayTotalTokens")
+    if today_prompts is not None or today_tokens is not None:
+        lines.append("")
+        bits = []
+        if today_prompts is not None:
+            bits.append(f"{today_prompts} prompts")
+        if isinstance(today_tokens, (int, float)) and today_tokens:
+            bits.append(f"{today_tokens / 1e6:.1f}M tokens")
+        lines.append("Today: " + ", ".join(bits))
+
+    if primary is None or not isinstance(primary.get("percent"), (int, float)):
+        emit(f"{ICON} --", "\n".join(lines))
+        return 0
+
+    fraction = float(primary["percent"])
+    pct = round(fraction * 100)
+    cls = "critical" if fraction >= CRITICAL_AT else "warning" if fraction >= WARNING_AT else "ok"
+    emit(f"{ICON} {pct}%", "\n".join(lines), cls, pct)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

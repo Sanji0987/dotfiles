@@ -1,0 +1,81 @@
+#!/bin/bash
+
+# Regenerate the AI agent usage data files.
+#
+#   agent-usage-update [--force] [--limits-only] [--except <agent>] [agent...]
+#
+# Each agent-usage-<agent> collector prints one display-ready JSON record;
+# this writes them to ~/.local/state/agent-usage/ where the waybar module
+# reads them. Adding an agent is adding a collector — anything matching the
+# glob below is picked up.
+#
+# Rescued from omarchy's bin/omarchy-agent-usage-update when the Quickshell
+# shell was retired. The collectors are unmodified; only the output directory
+# and the collector lookup changed, both of which used to point into the
+# omarchy tree.
+
+# edited by claude opus 5
+# write beside the other self-owned state, not into the omarchy tree that is
+# being deleted
+USAGE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/agent-usage"
+mkdir -p "$USAGE_DIR"
+
+flags=()
+only=()
+declare -A excluded
+
+while (($# > 0)); do
+  case "$1" in
+  --force | --limits-only) flags+=("$1") ;;
+  --except)
+    excluded[$2]=1
+    shift
+    ;;
+  *) only+=("$1") ;;
+  esac
+  shift
+done
+
+wanted() {
+  local agent="$1"
+  [[ -n ${excluded[$agent]} ]] && return 1
+  (( ${#only[@]} == 0 )) && return 0
+  local candidate
+  for candidate in "${only[@]}"; do
+    [[ $candidate == "$agent" ]] && return 0
+  done
+  return 1
+}
+
+collect() {
+  local collector="$1" agent="$2"
+  local record tmp
+  if ! record=$("$collector" "${flags[@]}") || [[ -z $record ]] || ! jq -e . >/dev/null 2>&1 <<<"$record"; then
+    echo "agent-usage-update: $agent collector failed" >&2
+    return 1
+  fi
+  tmp=$(mktemp "$USAGE_DIR/.$agent.XXXXXX")
+  printf '%s\n' "$record" >"$tmp"
+  mv "$tmp" "$USAGE_DIR/$agent.json"
+}
+
+# edited by claude opus 5
+# find the collectors next to this script instead of under $OMARCHY_PATH, so
+# the set works from the dotfiles checkout and from ~/.local/bin alike
+SELF_DIR=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")
+
+pids=()
+for collector in "$SELF_DIR"/agent-usage-*; do
+  [[ -x $collector ]] || continue
+  agent="${collector##*/agent-usage-}"
+  [[ $agent == "update" ]] && continue
+  wanted "$agent" || continue
+  collect "$collector" "$agent" &
+  pids+=($!)
+done
+
+status=0
+for pid in "${pids[@]}"; do
+  wait "$pid" || status=1
+done
+exit $status
