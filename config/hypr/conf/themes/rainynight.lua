@@ -47,10 +47,16 @@ hl.config({
         -- A bright blur -- brightness and contrast above 1 -- which is what
         -- gives the translucent panels their lit, rained-on look. The base
         -- look darkens instead (brightness 0.72).
+        --
+        -- edited by claude opus 5
+        -- size 1 is a one-pixel kernel: the passes were doing almost nothing
+        -- and there was no visible frost on anything. 8/3 is a real blur at
+        -- roughly the same cost, and it is what the layer rules in rules.lua
+        -- need to make the bar and launcher read as glass.
         blur = {
             enabled           = true,
-            size              = 1,
-            passes            = 4,
+            size              = 8,
+            passes            = 3,
             contrast          = 1.1,
             brightness        = 1.1,
             vibrancy          = 0.2,

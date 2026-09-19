@@ -8,9 +8,15 @@
  * radii, spacing, font) is a hand-picked constant. Nothing is generated and
  * nothing is imported.
  *
- * Font: JetBrainsMono Nerd Font, named explicitly. This machine's system
- * `monospace` alias resolves to Noto Sans Mono, which has no Nerd Font glyphs
- * — the icons below would render as tofu boxes under a bare `monospace`.
+ * The window is transparent and the frosting comes from Hyprland, not from
+ * here: conf/rules.lua blurs the `waybar` layer with xray, so the bar samples
+ * the wallpaper rather than the windows under it. ignore_alpha 0.2 means the
+ * fully transparent parts of this surface are left alone, so only the module
+ * pills below actually frost.
+ *
+ * Font: Inter for text with JetBrainsMono Nerd Font behind it for glyphs. The
+ * system `monospace` alias is Noto Sans Mono, which has no Nerd Font glyphs,
+ * so the icons would be tofu under a bare `monospace`.
  */
 
 /* edited by claude opus 5
@@ -33,35 +39,63 @@
 @define-color yellow          #f9e2af;
 
 * {
-  font-family: "JetBrainsMono Nerd Font";
+  font-family: "Inter", "JetBrainsMono Nerd Font";
   font-size: 13px;
   min-height: 0;
 }
 
+/* Transparent: the bar is the pills, not a bar-shaped slab. */
 window#waybar {
-  background: @background;
+  background: transparent;
+  color: @foreground;
+}
+
+/* One shared pill shape. Every module that shows a background uses it, so the
+ * bar reads as a row of chips floating over the wallpaper. */
+#custom-launcher,
+#workspaces,
+#window,
+#clock,
+#custom-weather,
+#mpris,
+#custom-claude,
+#tray,
+#bluetooth,
+#network,
+#pulseaudio,
+#custom-power {
+  background: alpha(@background, 0.72);
+  border: 1px solid alpha(@foreground, 0.08);
+  border-radius: 10px;
+  margin: 5px 2px;
+  padding: 0 11px;
   color: @foreground;
 }
 
 /* ------------------------------------------------------------------ left */
 
 #custom-launcher {
-  padding: 0 12px;
   color: @accent;
   font-size: 15px;
+  padding: 0 13px;
 }
 
 #custom-launcher:hover {
-  background: alpha(@foreground, 0.08);
+  background: alpha(@accent, 0.18);
 }
 
 #workspaces {
-  margin: 0 4px;
+  padding: 0 4px;
 }
 
 #workspaces button {
   padding: 0 6px;
+  margin: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
   color: @muted;
+  transition: color 180ms ease, background 180ms ease;
 }
 
 #workspaces button.active {
@@ -70,76 +104,110 @@ window#waybar {
 
 #workspaces button.empty {
   color: @muted;
-  opacity: 0.5;
+  opacity: 0.45;
 }
 
 #workspaces button:hover {
-  background: alpha(@foreground, 0.08);
+  background: alpha(@foreground, 0.1);
+}
+
+/* The focused window's title. Italic and muted so it reads as context rather
+ * than as another control, and it collapses to nothing when empty. */
+#window {
+  font-style: italic;
+  font-size: 12px;
+  color: @muted;
+}
+
+window#waybar.empty #window {
+  background: transparent;
+  border-color: transparent;
+  padding: 0;
+  margin: 0;
 }
 
 /* ---------------------------------------------------------------- center */
 
-#idle_inhibitor,
-#language,
-#clock,
-#custom-weather {
-  padding: 0 10px;
-  color: @foreground;
-}
-
-#idle_inhibitor.activated {
-  color: @accent;
+#clock {
+  font-weight: 700;
 }
 
 #custom-weather {
   color: @muted;
+  font-size: 12px;
 }
 
 /* ------------------------------------------------------------------ right */
 
-#tray,
-#bluetooth,
-#network,
-#pulseaudio,
-#cpu,
-#memory,
-#custom-power {
-  padding: 0 10px;
+/* Now playing. Quiet by default; the paused state drops the chrome entirely
+ * so a paused player does not sit there drawing attention. */
+#mpris {
+  font-size: 12px;
+  color: @muted;
+}
+
+#mpris.playing {
   color: @foreground;
+}
+
+#mpris.paused {
+  background: transparent;
+  border-color: transparent;
+  opacity: 0.55;
+}
+
+/* Claude Code usage. Classes come from bin/waybar-claude. */
+#custom-claude {
+  color: @accent;
+}
+
+#custom-claude.warning {
+  color: @yellow;
+  border-color: alpha(@yellow, 0.35);
+}
+
+#custom-claude.critical {
+  color: @red;
+  border-color: alpha(@red, 0.45);
+  background: alpha(@red, 0.12);
+}
+
+#tray {
+  padding: 0 9px;
 }
 
 #tray > .passive {
   -gtk-icon-effect: dim;
 }
 
-#bluetooth.disabled,
-#network.disconnected {
-  color: @muted;
+#tray > .needs-attention {
+  -gtk-icon-effect: highlight;
 }
 
+#bluetooth.disabled,
+#network.disconnected,
 #pulseaudio.muted {
   color: @muted;
 }
 
 #custom-power {
   color: @red;
-  font-size: 15px;
+  font-size: 14px;
+  padding: 0 12px;
 }
 
 #custom-power:hover {
-  background: alpha(@bright_red, 0.15);
-}
-
-/* Same hover affordance across every right-hand indicator. */
-#bluetooth:hover,
-#network:hover,
-#pulseaudio:hover {
-  background: alpha(@foreground, 0.08);
+  background: alpha(@bright_red, 0.18);
+  border-color: alpha(@bright_red, 0.4);
 }
 
 tooltip {
-  background: @dark_background;
+  background: alpha(@dark_background, 0.96);
+  border: 1px solid alpha(@foreground, 0.12);
+  border-radius: 10px;
+}
+
+tooltip label {
   color: @foreground;
-  border: 1px solid alpha(@foreground, 0.15);
-  border-radius: 6px;
+  padding: 2px;
 }

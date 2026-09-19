@@ -61,28 +61,33 @@ hl.window_rule({
 })
 
 -- edited by claude opus 5
--- all three blur rules named surfaces that no longer exist; replaced with the
--- Omarchy shell's real namespaces, which want animation rules and NOT blur
+-- the shell's namespaces are gone; these are the real surfaces now, and they
+-- finally get blur
 --
--- The old rules targeted `ashell` (replaced by the Quickshell bar),
--- `notifications` (mako, now uninstalled) and `hyprlauncher` (never used, the
--- launcher is `omarchy menu`). `hyprctl layers` showed none of them, so all
--- three had been dead for a while.
+-- Blur was deliberately off for the Quickshell layers, and the recorded reason
+-- was sound: `omarchy-background` and `omarchy-notifications` were FULL-SCREEN
+-- layers, so blurring them blurred the whole screen rather than the toast.
+-- None of the replacements is full-screen except the wallpaper, which is
+-- excluded, so that reason is gone with the shell.
 --
--- Deliberately no blur on the replacements. Upstream does not blur its own
--- layers either: the shell paints its surfaces from shell.toml, and both
--- `omarchy-background` and `omarchy-notifications` are FULL-SCREEN layers, so
--- a compositor blur would blur the entire screen rather than the toast.
+-- ignore_alpha is the field 0.56 exposes; hyprlang's old `ignorezero` does not
+-- exist here, and `ignore_zero` is rejected outright (which is how this was
+-- found). Below 0.2 opacity a pixel is left unblurred, so the transparent
+-- margins around a bar or a toast do not paint a blurred slab, while the
+-- surface's own translucent background still frosts.
 hl.layer_rule({
-    name  = "bar-instant",
-    match = { namespace = "omarchy-bar" },
-    no_anim = true, animation = "none",
+    name  = "blur-bar",
+    match = { namespace = "waybar" },
+    blur = true, ignore_alpha = 0.2,
+    -- xray samples the wallpaper rather than the windows underneath, so the
+    -- bar keeps one steady look instead of smearing whatever is beneath it.
+    xray = true,
 })
 
 hl.layer_rule({
-    name  = "panels-instant",
-    match = { namespace = "^(omarchy-menu|omarchy-image-selector|omarchy-emojis|omarchy-clipboard|omarchy-keyboard-panel)$" },
-    no_anim = true, animation = "none",
+    name  = "blur-surfaces",
+    match = { namespace = "^(rofi|notifications|swayosd)$" },
+    blur = true, ignore_alpha = 0.2,
 })
 
 hl.layer_rule({ name = "blur-selection", match = { namespace = "^selection$" },     no_anim = true })
