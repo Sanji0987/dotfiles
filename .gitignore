@@ -15,12 +15,8 @@ omarchy-shell/state/
 config/walker/themes/omarchy/style.css
 
 # edited by claude opus 5
-# kitty's palette is generated now, so the deployed copy must not be tracked
-# Generated on every theme change by omarchy-kitty-theme-sync. kitty.conf
-# includes it; ~/.config/kitty is this directory, so the render lands inside
-# the repo. Edit the sources instead: the theme's colors.toml, or the reviewed
-# per-theme extract in config/kitty/themes/<slug>.conf.
-config/kitty/current-theme.conf
+# kitty's palette is hand-maintained now, so it must be TRACKED, not ignored —
+# nothing regenerates it, and a fresh checkout needs it for the include to work
 
 # edited by claude sonnet 5
 # documented why waybar needs no ignore entry, so it is not added later by mistake

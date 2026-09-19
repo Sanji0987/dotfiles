@@ -3,12 +3,13 @@
 # cava is NOT installed on this machine. This config is here so it works the
 # moment it is (`sudo pacman -S cava`); nothing was installed to place it.
 #
-# The gradient below is copied from the theme's own cava_theme, staged at
-# ~/.local/state/omarchy/current/theme/cava_theme. It does NOT follow a theme
-# change: cava has no include directive, so a colour section cannot be sourced
-# from elsewhere the way kitty's and hyprlock's are. If cava earns a place in
-# the daily setup, the honest fix is a small sync script beside
-# omarchy-kitty-theme-sync rather than hand-editing this block.
+# edited by claude opus 5
+# dropped the reference to the omarchy staging path and sync script, both gone
+#
+# The gradient below was copied from the rainynight theme's own cava_theme.
+# Like every other palette here it is now a literal with no generator behind
+# it: cava has no include directive, so a colour section could never have been
+# sourced from elsewhere anyway. Edit this block directly.
 
 [general]
 framerate = 60

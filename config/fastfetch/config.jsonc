@@ -1,10 +1,13 @@
 // fastfetch — laid out to match the rainynight theme's screenshots.
 //
+// edited by claude opus 5
+// the terminal palette is hand-maintained now, not generated; the mechanism
+// this describes is gone but the reasoning for ANSI names still holds
+//
 // Colours are deliberately ANSI names ("white", "default") rather than hex.
-// That makes them resolve through the terminal palette, and the terminal
-// palette is generated from the active Omarchy theme by
-// omarchy-kitty-theme-sync — so this follows the theme with no template and no
-// hook of its own.
+// That makes them resolve through whatever the terminal palette is, so this
+// file needs no colours of its own and tracks kitty's current-theme.conf for
+// free.
 //
 // The screenshots show lowercase keys, no colons and no separator rule, which
 // is what the display block below reproduces.
