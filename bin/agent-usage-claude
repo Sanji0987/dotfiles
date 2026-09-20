@@ -197,13 +197,23 @@ def scan_projects(projects_path: Path) -> dict[str, Any]:
       print(f"Ignoring unreadable Claude project file {path}: {exc}", file=sys.stderr)
 
   return {
+    # edited by claude opus 5
+    # The counters above tick once per assistant message carrying a usage
+    # block, which is one API round trip: every tool-use cycle inside a single
+    # prompt, and every subagent turn, increments them. That is burn rate, not
+    # prompt count - a day with two review subagents read 107 against 9
+    # prompts actually typed. main() overwrites todayPrompts and totalPrompts
+    # with the real counts from history.jsonl; the round-trip numbers keep
+    # their own names here because burn rate is still worth having.
     "todayPrompts": today_prompt_count,
+    "todayTurns": today_prompt_count,
     "todaySessions": len(today_sessions),
     "todayTotalTokens": today_token_total,
     "todayTokensByModel": today_tokens,
     "recentDays": [recent[day] for day in recent_dates],
     "modelUsage": usage_by_model,
     "totalPrompts": prompts,
+    "totalTurns": prompts,
     "totalSessions": len(sessions),
     # Days with any recorded usage, for the all-time "N days" summary. The
     # dates travel too: merging snapshots from several machines needs their
@@ -304,30 +314,70 @@ def stats_cache_fallback(claude_dir: Path) -> dict[str, Any] | None:
   }
 
 
-def today_prompts_from_history(claude_dir: Path) -> tuple[int, int]:
-  prompts = 0
-  sessions: set[str] = set()
-  start_of_day = dt.datetime.combine(dt.datetime.now().date(), dt.time.min).timestamp() * 1000
-  try:
-    with (claude_dir / "history.jsonl").open("r", encoding="utf-8", errors="replace") as handle:
-      lines = handle.readlines()
-  except Exception:
-    return 0, 0
+# edited by claude opus 5
+# Was a today-only scan that walked the file backwards and stopped at the first
+# entry older than midnight. It now reads the whole file, because the totals
+# want it too: 626 entries covering two months is nothing to parse, and the
+# early exit only ever saved microseconds.
+def history_prompt_counts(claude_dir: Path) -> dict[str, int] | None:
+  """Prompts actually submitted, from Claude Code's own history.jsonl.
 
-  for line in reversed(lines):
-    line = line.strip()
-    if not line:
-      continue
-    try:
-      entry = json.loads(line)
-    except Exception:
-      continue
-    if number(entry.get("timestamp")) < start_of_day:
-      break
-    prompts += 1
-    if entry.get("sessionId"):
-      sessions.add(str(entry.get("sessionId")))
-  return prompts, len(sessions)
+  One line per prompt typed, across every project. This is the only record of
+  what a person did, as opposed to what the agent did in response, so it is
+  what "prompts" means in the record this script prints.
+
+  Returns None when there is no readable history, so callers keep whatever
+  they already had rather than overwriting it with zeroes. Note the totals
+  reach back only as far as history.jsonl is retained; today's figure, which
+  is the one the bar shows, is never affected by that.
+  """
+  start_of_day = dt.datetime.combine(dt.datetime.now().date(), dt.time.min).timestamp() * 1000
+  today = 0
+  total = 0
+  sessions: set[str] = set()
+  today_sessions: set[str] = set()
+
+  try:
+    handle = (claude_dir / "history.jsonl").open("r", encoding="utf-8", errors="replace")
+  except Exception:
+    return None
+
+  with handle:
+    for line in handle:
+      line = line.strip()
+      if not line:
+        continue
+      try:
+        entry = json.loads(line)
+      except Exception:
+        continue
+
+      total += 1
+      session = str(entry.get("sessionId") or "")
+      if session:
+        sessions.add(session)
+
+      if number(entry.get("timestamp")) >= start_of_day:
+        today += 1
+        if session:
+          today_sessions.add(session)
+
+  if total == 0:
+    return None
+
+  return {
+    "todayPrompts": today,
+    "todaySessions": len(today_sessions),
+    "totalPrompts": total,
+    "totalSessions": len(sessions),
+  }
+
+
+def today_prompts_from_history(claude_dir: Path) -> tuple[int, int]:
+  counts = history_prompt_counts(claude_dir)
+  if counts is None:
+    return 0, 0
+  return counts["todayPrompts"], counts["todaySessions"]
 
 
 # --------------------------------------------------------------- pi and omp
@@ -543,7 +593,8 @@ def scan_opencode_usage(max_age_seconds: float) -> dict[str, Any] | None:
 
 def merge_stats(base: dict[str, Any], extra: dict[str, Any]) -> dict[str, Any]:
   merged = dict(base)
-  for key in ("todayPrompts", "todaySessions", "todayTotalTokens", "totalPrompts", "totalSessions"):
+  for key in ("todayPrompts", "todayTurns", "todaySessions", "todayTotalTokens",
+              "totalPrompts", "totalTurns", "totalSessions"):
     merged[key] = number(base.get(key)) + number(extra.get(key))
 
   combined = dict(base.get("todayTokensByModel") or {})
@@ -871,6 +922,21 @@ def main() -> int:
       if today_prompts or today_sessions:
         stats = dict(stats, todayPrompts=today_prompts, todaySessions=today_sessions)
 
+  # edited by claude opus 5
+  # Prompt counts come from history.jsonl, never from the transcript scan. It
+  # runs after the fallback above, which still keys off the transcript-derived
+  # total to decide whether there is anything on disk, and before the merges
+  # below, so prompts from the other agents still add on top. Sessions are
+  # left alone: subagents share their parent's sessionId, so those were never
+  # inflated and the transcripts reach back further.
+  history = history_prompt_counts(claude_dir)
+  if history is not None:
+    stats = dict(
+      stats,
+      todayPrompts=history["todayPrompts"],
+      totalPrompts=history["totalPrompts"],
+    )
+
   pi_usage = scan_pi_usage(scan_age)
   if pi_usage is not None:
     stats = merge_stats(stats, pi_usage)
@@ -887,7 +953,9 @@ def main() -> int:
     "id": AGENT_ID,
     "name": AGENT_NAME,
     "updatedAt": dt.datetime.now(dt.timezone.utc).isoformat(),
-    "ready": number(stats.get("totalPrompts")) > 0 or len(limits["limits"]) > 0,
+    "ready": number(stats.get("totalPrompts")) > 0
+    or number(stats.get("totalTurns")) > 0
+    or len(limits["limits"]) > 0,
     "hasLocalStats": True,
     "tierLabel": plan,
     "usageStatusText": limits["usageStatusText"],
