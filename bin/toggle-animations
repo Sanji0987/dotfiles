@@ -1,0 +1,8 @@
+#!/bin/sh
+if [ "$(gsettings get org.gnome.desktop.interface enable-animations)" = "true" ]; then
+  gsettings set org.gnome.desktop.interface enable-animations false
+  notify-send -e -t 1500 "Animations off"
+else
+  gsettings set org.gnome.desktop.interface enable-animations true
+  notify-send -e -t 1500 "Animations on"
+fi

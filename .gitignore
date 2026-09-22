@@ -1,0 +1,43 @@
+# Branch-local ignores. This is the `gnome` branch and it shares no history
+# with main or laptop, so nothing here applies to them.
+
+# personal scratch notes
+*.local.md
+local/
+
+# backups
+*.bak
+*.bak.*
+*.pre-dotfiles
+
+# --- generated or non-redistributable -----------------------------------------
+# All of this is output of an upstream install script, or a font I am not
+# allowed to redistribute. README.md has the commands to regenerate every bit.
+
+# Apple SF Pro -- licensed for interface design on Apple platforms only, no
+# redistribution. Download from developer.apple.com/fonts.
+/fonts/
+**/fonts/SF/
+*.otf
+*.ttf
+
+# WhiteSur install.sh -l output: hundreds of MB of generated CSS + assets
+config/gtk-4.0/assets/
+config/gtk-4.0/windows-assets/
+config/gtk-4.0/gtk-Dark.css
+config/gtk-4.0/gtk-Light.css
+config/gtk-4.0/gtk.css
+config/gtk-4.0/gtk-dark.css
+
+# generated theme/icon/cursor trees and wallpapers.
+# Leading slash matters: a bare `themes/` would also swallow
+# config/kitty/themes/, which is hand-written and must be committed.
+/themes/
+/icons/
+/wallpapers/
+
+# upstream clones, if anyone clones them in here
+WhiteSur-gtk-theme/
+WhiteSur-icon-theme/
+WhiteSur-cursors/
+search-light/
