@@ -1,0 +1,96 @@
+#!/usr/bin/python3
+"""Toggle the built-in panel between 60 Hz and 144 Hz.
+
+There is no gsettings key for refresh rate -- under Wayland the only way in is
+mutter's DisplayConfig D-Bus API, so this talks to it directly.
+
+Applied with method=2 (persistent), which writes ~/.config/monitors.xml and
+survives a reboot. method=1 would be temporary and would leave the mode to
+revert on its own.
+"""
+
+import sys
+import gi
+
+gi.require_version("Gio", "2.0")
+from gi.repository import Gio, GLib
+
+LOW, HIGH = 60.0, 144.0
+CROSSOVER = 100.0  # anything above this counts as "currently on high"
+
+APPLY_PERSISTENT = 2
+
+
+def notify(msg):
+    try:
+        Gio.Subprocess.new(
+            ["notify-send", "-e", "-t", "1500", msg], Gio.SubprocessFlags.NONE
+        )
+    except GLib.Error:
+        print(msg)
+
+
+def main():
+    proxy = Gio.DBusProxy.new_for_bus_sync(
+        Gio.BusType.SESSION, Gio.DBusProxyFlags.NONE, None,
+        "org.gnome.Mutter.DisplayConfig", "/org/gnome/Mutter/DisplayConfig",
+        "org.gnome.Mutter.DisplayConfig", None,
+    )
+    serial, monitors, logical, _props = proxy.call_sync(
+        "GetCurrentState", None, Gio.DBusCallFlags.NONE, -1, None
+    ).unpack()
+
+    # The logical monitor we are changing: primary if flagged, else the first.
+    lm = next((l for l in logical if l[4]), logical[0] if logical else None)
+    if lm is None:
+        notify("Refresh: no monitor found")
+        return 1
+    x, y, scale, transform, primary, lm_monitors, _lprops = lm
+    connector = lm_monitors[0][0]
+
+    # Every mode this connector offers, plus which one is live.
+    modes, current = [], None
+    for (conn, _v, _p, _s), mode_list, _mprops in monitors:
+        if conn != connector:
+            continue
+        for mode_id, w, h, rr, _ps, _ss, flags in mode_list:
+            modes.append((mode_id, w, h, rr))
+            if flags.get("is-current"):
+                current = (mode_id, w, h, rr)
+
+    if current is None:
+        notify(f"Refresh: no current mode on {connector}")
+        return 1
+
+    _cur_id, cw, ch, cur_rr = current
+    target = LOW if cur_rr >= CROSSOVER else HIGH
+
+    # Stay at the current resolution; take the mode closest to the target rate.
+    same_res = [m for m in modes if (m[1], m[2]) == (cw, ch)]
+    best = min(same_res, key=lambda m: abs(m[3] - target))
+    if abs(best[3] - target) > 5.0:
+        notify(f"Refresh: no ~{target:.0f} Hz mode at {cw}x{ch}")
+        return 1
+    if best[0] == _cur_id:
+        notify(f"Refresh: already {cur_rr:.0f} Hz")
+        return 0
+
+    config = GLib.Variant(
+        "(uua(iiduba(ssa{sv}))a{sv})",
+        (serial, APPLY_PERSISTENT,
+         [(x, y, scale, transform, primary, [(connector, best[0], {})])],
+         {}),
+    )
+    try:
+        proxy.call_sync("ApplyMonitorsConfig", config,
+                        Gio.DBusCallFlags.NONE, -1, None)
+    except GLib.Error as e:
+        notify(f"Refresh: failed -- {e.message}")
+        return 1
+
+    notify(f"{best[3]:.0f} Hz")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

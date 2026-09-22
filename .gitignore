@@ -41,3 +41,6 @@ WhiteSur-gtk-theme/
 WhiteSur-icon-theme/
 WhiteSur-cursors/
 search-light/
+
+# names the panel by vendor/product/serial -- machine-specific, not portable
+monitors.xml

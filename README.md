@@ -235,7 +235,31 @@ Key bindings worth knowing:
 | `Super+Space` | Search Light |
 | `Super+Return` | kitty |
 | `Super+Shift+M` | toggle animations (`bin/toggle-animations`) |
+| `Super+Shift+P` | toggle the panel between 60 Hz and 144 Hz (`bin/toggle-refresh-rate`) |
 | `Super` alone | nothing — deliberately freed |
+
+## Refresh rate
+
+The BOE094D panel in this laptop is **144 Hz**, and Fedora came up on the 60 Hz
+mode -- `1920x1080@144.003` is flagged `is-preferred` by the panel's own EDID
+while `1920x1080@60.001` was the one mutter had selected. If the desktop ever
+feels vaguely sluggish for no reason you can measure, check this first.
+
+There is no gsettings key for refresh rate. Under Wayland the only way in is
+mutter's `org.gnome.Mutter.DisplayConfig` D-Bus API, which is what
+`bin/toggle-refresh-rate` talks to. It applies with `method=2` (persistent), so
+the choice is written to `~/.config/monitors.xml` and survives a reboot.
+
+To check what the panel actually offers:
+
+```sh
+gdbus call --session --dest org.gnome.Mutter.DisplayConfig \
+  --object-path /org/gnome/Mutter/DisplayConfig \
+  --method org.gnome.Mutter.DisplayConfig.GetCurrentState
+```
+
+`monitors.xml` is NOT committed -- it names the panel by vendor/product/serial
+and is meaningless on any other machine.
 
 ## Layout
 
@@ -247,6 +271,7 @@ Mirrors the convention the other branches use — `config/` maps onto `~/.config
 | `gsettings.sh` | — (run it) |
 | `dconf/` | — (reference dumps) |
 | `bin/toggle-animations` | `~/.local/bin/` |
+| `bin/toggle-refresh-rate` | `~/.local/bin/` |
 | `config/gtk-4.0/settings.ini` | `~/.config/gtk-4.0/` |
 | `config/gtk-3.0/settings.ini` | `~/.config/gtk-3.0/` |
 | `config/kitty/` | `~/.config/kitty/` |
