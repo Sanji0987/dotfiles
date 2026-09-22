@@ -141,7 +141,17 @@ add_binding() { # slug  name  command  binding
 add_binding custom0     'kitty'             'kitty'                          '<Super>Return'
 add_binding toggle-anim 'Toggle animations' "$HOME/.local/bin/toggle-animations" '<Super><Shift>m'
 add_binding toggle-refresh 'Toggle refresh rate' "$HOME/.local/bin/toggle-refresh-rate" '<Super><Shift>p'
-add_binding toggle-sleep 'Toggle sleep inhibit' "$HOME/.local/bin/toggle-sleep" '<Super><Shift>s'
+add_binding toggle-sleep 'Toggle sleep inhibit' "$HOME/.local/bin/toggle-sleep" '<Super><Shift>k'
+
+# --- screenshots --------------------------------------------------------------
+# grim/slurp do NOT work under GNOME -- they need wlr-screencopy and
+# wlr-layer-shell, which are wlroots protocols that mutter does not implement.
+# The org.gnome.Shell.Screenshot D-Bus API is gated to privileged callers and
+# answers AccessDenied to a plain script, so a custom snip tool is out too.
+# GNOME's own screenshot UI is the rectangular snip: it opens in region-select
+# mode, and copies to the clipboard as well as saving to ~/Pictures/Screenshots.
+say "screenshots"
+gsettings set org.gnome.shell.keybindings show-screenshot-ui "['<Super><Shift>s', 'Print']"
 
 # --- GTK4 symlinks ------------------------------------------------------------
 # install.sh -l writes gtk-Dark.css / gtk-Light.css + assets into ~/.config/gtk-4.0,

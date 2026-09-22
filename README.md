@@ -236,7 +236,8 @@ Key bindings worth knowing:
 | `Super+Return` | kitty |
 | `Super+Shift+M` | toggle animations (`bin/toggle-animations`) |
 | `Super+Shift+P` | toggle the panel between 60 Hz and 144 Hz (`bin/toggle-refresh-rate`) |
-| `Super+Shift+S` | toggle sleep inhibit -- caffeine (`bin/toggle-sleep`) |
+| `Super+Shift+K` | toggle sleep inhibit -- caffeine (`bin/toggle-sleep`) |
+| `Super+Shift+S` | rectangular snip -- GNOME's screenshot UI (`Print` also works) |
 | `Super` alone | nothing — deliberately freed |
 
 ## Refresh rate
@@ -272,6 +273,23 @@ Two things the wrapper handles that a bare `gdctl set` does not:
 
 `monitors.xml` is NOT committed -- it names the panel by vendor/product/serial
 and is meaningless on any other machine.
+
+## Screenshots
+
+`Super+Shift+S` is bound to GNOME's own screenshot UI, which opens in
+region-select mode — drag a rectangle, and it goes to the clipboard *and* to
+`~/Pictures/Screenshots`. `Print` still works as well.
+
+There is deliberately no custom snip script here, because all three of the
+obvious approaches are dead ends on GNOME:
+
+| approach | why not |
+|---|---|
+| `grim` / `slurp` | need `wlr-screencopy` and `wlr-layer-shell`, wlroots protocols mutter does not implement. `grim` exits with *"compositor doesn't support the screen capture protocol"* — it is installed here only as leftover from the Sway spin |
+| `org.gnome.Shell.Screenshot` D-Bus | gated to privileged callers; a plain script gets `GDBus.Error:org.freedesktop.DBus.Error.AccessDenied: ScreenshotArea is not allowed` |
+| `xdg-desktop-portal` | works, but `interactive: true` just opens the same GNOME UI, via a Request/Response handshake |
+
+So the built-in *is* the answer, and rebinding it costs nothing.
 
 ## Layout
 
