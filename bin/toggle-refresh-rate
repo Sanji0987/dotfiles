@@ -1,137 +1,82 @@
-#!/usr/bin/python3
-"""Toggle the built-in panel between 60 Hz and 144 Hz.
+#!/usr/bin/env bash
+# Toggle the built-in panel between 60 Hz and 144 Hz.
+#
+#   -n, --notify   desktop notification (default)
+#   -q, --quiet    change the mode, say nothing
+#   -p, --print    print the new rate to stdout instead of notifying
+#   -s, --status   report the current rate and change nothing
+#   -h, --help     this text
+#
+# There is no gsettings key for refresh rate. This drives `gdctl`, the display
+# CLI that ships inside mutter itself (GNOME 48+) -- `rpm -qf $(which gdctl)`
+# says mutter. An earlier version of this script spoke to the underlying
+# org.gnome.Mutter.DisplayConfig D-Bus API by hand; it is in the git history if
+# gdctl is ever missing, but there is no reason to prefer it.
 
-  -n, --notify   desktop notification (default)
-  -q, --quiet    change the mode, say nothing
-  -p, --print    print the new rate to stdout instead of notifying
-  -s, --status   report the current rate and change nothing
-  -h, --help     this text
+set -euo pipefail
 
-There is no gsettings key for refresh rate -- under Wayland the only way in is
-mutter's DisplayConfig D-Bus API, so this talks to it directly.
+LOW=60
+HIGH=144
+CROSSOVER=100   # above this counts as "currently on high"
+TOLERANCE=5     # refuse if the nearest mode is further than this from target
 
-Applied with method=2 (persistent), which writes ~/.config/monitors.xml and
-survives a reboot. method=1 would be temporary and would leave the mode to
-revert on its own.
-"""
+MODE=notify
+case "${1:-}" in
+  -n|--notify) MODE=notify ;;
+  -q|--quiet)  MODE=quiet ;;
+  -p|--print)  MODE=print ;;
+  -s|--status) MODE=status ;;
+  -h|--help)   sed -n '2,15p' "$0" | sed 's/^# \?//'; exit 0 ;;
+  "")          ;;
+  *)           echo "${0##*/}: unknown option: $1" >&2; exit 2 ;;
+esac
 
-import sys
-import gi
+say() {
+  case "$MODE" in
+    notify) notify-send -e -t 1500 -a toggle-refresh-rate \
+              -h string:x-canonical-private-synchronous:toggle-refresh-rate "$1" ;;
+    print|status) printf '%s\n' "$1" ;;
+    quiet)  ;;
+  esac
+}
 
-gi.require_version("Gio", "2.0")
-from gi.repository import Gio, GLib
+command -v gdctl >/dev/null || {
+  echo "${0##*/}: gdctl not found -- needs mutter 48 or newer" >&2; exit 1; }
 
-LOW, HIGH = 60.0, 144.0
-CROSSOVER = 100.0  # anything above this counts as "currently on high"
+# Two calls on purpose: `gdctl show -m` REPLACES the "Current mode" line with
+# the full mode list, so neither view has everything.
+info=$(gdctl show)       # connector, current mode, scale
+modes=$(gdctl show -m)   # every mode the panel offers
 
-APPLY_PERSISTENT = 2
+connector=$(sed -n 's/.*Monitor \([A-Za-z0-9-]\{1,\}\) (.*/\1/p' <<<"$info" | head -1)
+current=$(awk '/Current mode/{getline; gsub(/[^0-9x@.]/,""); print; exit}' <<<"$info")
+[[ -n "$connector" && -n "$current" ]] || { echo "${0##*/}: could not read current mode" >&2; exit 1; }
 
+res="${current%@*}"      # 1920x1080
+rate="${current#*@}"     # 144.003
 
-MODE = "notify"
+if [[ "$MODE" == status ]]; then
+  say "$(printf '%.0f Hz' "$rate")"
+  exit 0
+fi
 
+target=$HIGH
+awk -v r="$rate" -v c="$CROSSOVER" 'BEGIN{exit !(r>=c)}' && target=$LOW
 
-def say(msg):
-    """Report according to the mode chosen on the command line."""
-    if MODE == "quiet":
-        return
-    if MODE in ("print", "status"):
-        print(msg)
-        return
-    try:
-        Gio.Subprocess.new(
-            # The synchronous hint makes a repeated press REPLACE the banner
-            # instead of stacking a new one behind it.
-            ["notify-send", "-e", "-t", "1500", "-a", "toggle-refresh-rate",
-             "-h", "string:x-canonical-private-synchronous:toggle-refresh-rate",
-             msg],
-            Gio.SubprocessFlags.NONE,
-        )
-    except GLib.Error:
-        print(msg)
+# Stay at the current resolution; take whichever mode is nearest the target.
+best=$(grep -oE "${res}@[0-9.]+" <<<"$modes" | sort -u | awk -v t="$target" -v tol="$TOLERANCE" '
+  { split($0, a, "@"); d = a[2] - t; if (d < 0) d = -d
+    if (best == "" || d < bd) { bd = d; best = $0 } }
+  END { if (best != "" && bd <= tol) print best }')
 
+[[ -n "$best" ]] || { say "No ~${target} Hz mode at ${res}"; exit 1; }
+[[ "$best" != "$current" ]] || { say "Already $(printf '%.0f' "$rate") Hz"; exit 0; }
 
-def parse_args(argv):
-    global MODE
-    flags = {"-n": "notify", "--notify": "notify", "-q": "quiet",
-             "--quiet": "quiet", "-p": "print", "--print": "print",
-             "-s": "status", "--status": "status"}
-    if not argv:
-        return
-    a = argv[0]
-    if a in ("-h", "--help"):
-        print(__doc__.strip())
-        raise SystemExit(0)
-    if a not in flags:
-        print(f"toggle-refresh-rate: unknown option: {a}", file=sys.stderr)
-        raise SystemExit(2)
-    MODE = flags[a]
+# Carry the scale over -- gdctl set rebuilds the logical monitor, so a
+# non-default scale would silently reset to 1.0 if it were not passed.
+scale=$(sed -n 's/.*Scale: \([0-9.]\{1,\}\).*/\1/p' <<<"$info" | head -1)
 
+gdctl set --persistent --logical-monitor --primary \
+          --monitor "$connector" --mode "$best" --scale "${scale:-1.0}"
 
-def main():
-    parse_args(sys.argv[1:])
-    proxy = Gio.DBusProxy.new_for_bus_sync(
-        Gio.BusType.SESSION, Gio.DBusProxyFlags.NONE, None,
-        "org.gnome.Mutter.DisplayConfig", "/org/gnome/Mutter/DisplayConfig",
-        "org.gnome.Mutter.DisplayConfig", None,
-    )
-    serial, monitors, logical, _props = proxy.call_sync(
-        "GetCurrentState", None, Gio.DBusCallFlags.NONE, -1, None
-    ).unpack()
-
-    # The logical monitor we are changing: primary if flagged, else the first.
-    lm = next((l for l in logical if l[4]), logical[0] if logical else None)
-    if lm is None:
-        say("Refresh: no monitor found")
-        return 1
-    x, y, scale, transform, primary, lm_monitors, _lprops = lm
-    connector = lm_monitors[0][0]
-
-    # Every mode this connector offers, plus which one is live.
-    modes, current = [], None
-    for (conn, _v, _p, _s), mode_list, _mprops in monitors:
-        if conn != connector:
-            continue
-        for mode_id, w, h, rr, _ps, _ss, flags in mode_list:
-            modes.append((mode_id, w, h, rr))
-            if flags.get("is-current"):
-                current = (mode_id, w, h, rr)
-
-    if current is None:
-        say(f"Refresh: no current mode on {connector}")
-        return 1
-
-    _cur_id, cw, ch, cur_rr = current
-    if MODE == "status":
-        say(f"{cur_rr:.0f} Hz")
-        return 0
-    target = LOW if cur_rr >= CROSSOVER else HIGH
-
-    # Stay at the current resolution; take the mode closest to the target rate.
-    same_res = [m for m in modes if (m[1], m[2]) == (cw, ch)]
-    best = min(same_res, key=lambda m: abs(m[3] - target))
-    if abs(best[3] - target) > 5.0:
-        say(f"Refresh: no ~{target:.0f} Hz mode at {cw}x{ch}")
-        return 1
-    if best[0] == _cur_id:
-        say(f"Refresh: already {cur_rr:.0f} Hz")
-        return 0
-
-    config = GLib.Variant(
-        "(uua(iiduba(ssa{sv}))a{sv})",
-        (serial, APPLY_PERSISTENT,
-         [(x, y, scale, transform, primary, [(connector, best[0], {})])],
-         {}),
-    )
-    try:
-        proxy.call_sync("ApplyMonitorsConfig", config,
-                        Gio.DBusCallFlags.NONE, -1, None)
-    except GLib.Error as e:
-        say(f"Refresh: failed -- {e.message}")
-        return 1
-
-    say(f"{best[3]:.0f} Hz")
-    return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())
+say "$(printf '%.0f Hz' "${best#*@}")"

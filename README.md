@@ -246,18 +246,29 @@ mode -- `1920x1080@144.003` is flagged `is-preferred` by the panel's own EDID
 while `1920x1080@60.001` was the one mutter had selected. If the desktop ever
 feels vaguely sluggish for no reason you can measure, check this first.
 
-There is no gsettings key for refresh rate. Under Wayland the only way in is
-mutter's `org.gnome.Mutter.DisplayConfig` D-Bus API, which is what
-`bin/toggle-refresh-rate` talks to. It applies with `method=2` (persistent), so
-the choice is written to `~/.config/monitors.xml` and survives a reboot.
-
-To check what the panel actually offers:
+There is no gsettings key for refresh rate. The tool for it is **`gdctl`**,
+which ships inside mutter itself (GNOME 48+) -- `rpm -qf $(which gdctl)` says
+`mutter`, so there is nothing to install. `bin/toggle-refresh-rate` is a thin
+wrapper over it.
 
 ```sh
-gdbus call --session --dest org.gnome.Mutter.DisplayConfig \
-  --object-path /org/gnome/Mutter/DisplayConfig \
-  --method org.gnome.Mutter.DisplayConfig.GetCurrentState
+gdctl show         # current mode, scale, layout
+gdctl show -m      # every mode the panel offers
+gdctl set --persistent --logical-monitor --primary \
+          --monitor eDP-1 --mode 1920x1080@144.003
 ```
+
+`--persistent` writes the choice to `~/.config/monitors.xml` so it survives a
+reboot; without it the mode reverts on its own.
+
+Two things the wrapper handles that a bare `gdctl set` does not:
+
+- **`gdctl show -m` replaces the `Current mode` line with the mode list**, so
+  neither view has everything. Reading the current mode *and* the available
+  modes needs both calls.
+- **`gdctl set` rebuilds the logical monitor from the flags you pass**, so a
+  non-default `--scale` silently resets to 1.0 if you leave it out. The script
+  reads the live scale and passes it back.
 
 `monitors.xml` is NOT committed -- it names the panel by vendor/product/serial
 and is meaningless on any other machine.
