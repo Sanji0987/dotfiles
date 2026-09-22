@@ -10,7 +10,6 @@ local/
 # machine state, not config
 config/fish/fish_variables
 
-# edited by claude opus 5
 # everything below this line used to describe the omarchy theme pipeline: the
 # walker stage-2 render, the kitty palette that was generated rather than
 # written, the third-party theme clones, and a note explaining why waybar
