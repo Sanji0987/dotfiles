@@ -4,13 +4,6 @@ CachyOS, Hyprland 0.56.2 on Wayland, with KDE Plasma kept installed as a second
 session. Everything is symlinked out of this repo — the repo is the source of
 truth, `~` just points at it.
 
-```
-$ fastfetch --logo none
-
-### PASTE `fastfetch --logo none` OUTPUT HERE ###
-### strip the "Local IP" line first -- that is the network, not the config ###
-```
-
 This is my take on a desktop that does not fall over. The whole UI is several
 small independent daemons rather than one process, every palette is a file I
 wrote by hand instead of something generated, and the config is Lua that
