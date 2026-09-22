@@ -6,6 +6,11 @@ daemons, plus KDE Plasma as the second session.
 Everything here is symlinked into place — the repo is the single source of
 truth, the home directory just points at it.
 
+## Branches are modular and mutually exclusive
+
+Every branch in this repo is a **self-contained setup for one machine and one
+desktop**. These branches are mutually exclusive (to future me incase i forget).
+
 ## Layout
 
 | path | goes to | what |
