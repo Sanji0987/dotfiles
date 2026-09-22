@@ -141,6 +141,7 @@ add_binding() { # slug  name  command  binding
 add_binding custom0     'kitty'             'kitty'                          '<Super>Return'
 add_binding toggle-anim 'Toggle animations' "$HOME/.local/bin/toggle-animations" '<Super><Shift>m'
 add_binding toggle-refresh 'Toggle refresh rate' "$HOME/.local/bin/toggle-refresh-rate" '<Super><Shift>p'
+add_binding toggle-sleep 'Toggle sleep inhibit' "$HOME/.local/bin/toggle-sleep" '<Super><Shift>s'
 
 # --- GTK4 symlinks ------------------------------------------------------------
 # install.sh -l writes gtk-Dark.css / gtk-Light.css + assets into ~/.config/gtk-4.0,

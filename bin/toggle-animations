@@ -1,8 +1,39 @@
-#!/bin/sh
-if [ "$(gsettings get org.gnome.desktop.interface enable-animations)" = "true" ]; then
-  gsettings set org.gnome.desktop.interface enable-animations false
-  notify-send -e -t 1500 "Animations off"
+#!/usr/bin/env bash
+# Toggle GNOME animations.
+#
+#   -n, --notify   desktop notification (default)
+#   -q, --quiet    change the setting, say nothing
+#   -p, --print    print the new state to stdout instead of notifying
+#   -h, --help     this text
+
+set -euo pipefail
+
+MODE=notify
+case "${1:-}" in
+  -n|--notify) MODE=notify ;;
+  -q|--quiet)  MODE=quiet ;;
+  -p|--print)  MODE=print ;;
+  -h|--help)   sed -n '2,7p' "$0" | sed 's/^# \?//'; exit 0 ;;
+  "")          ;;
+  *)           echo "${0##*/}: unknown option: $1" >&2; exit 2 ;;
+esac
+
+KEY=org.gnome.desktop.interface
+
+if [ "$(gsettings get "$KEY" enable-animations)" = "true" ]; then
+  gsettings set "$KEY" enable-animations false
+  STATE="Animations off"
 else
-  gsettings set org.gnome.desktop.interface enable-animations true
-  notify-send -e -t 1500 "Animations on"
+  gsettings set "$KEY" enable-animations true
+  STATE="Animations on"
 fi
+
+case "$MODE" in
+  # The synchronous hint makes a repeated press REPLACE the banner instead of
+  # stacking a new one behind it -- the usual trick for OSD-style toggles.
+  notify) notify-send -e -t 1500 -a toggle-animations \
+            -h string:x-canonical-private-synchronous:toggle-animations \
+            "$STATE" ;;
+  print)  printf '%s\n' "$STATE" ;;
+  quiet)  ;;
+esac

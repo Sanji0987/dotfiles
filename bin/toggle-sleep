@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# Toggle whether this machine is allowed to sleep -- a caffeine switch.
+#
+#   -n, --notify   desktop notification (default)
+#   -q, --quiet    change the setting, say nothing
+#   -p, --print    print the new state to stdout instead of notifying
+#   -s, --status   report the current state and change nothing
+#   -h, --help     this text
+#
+# Inhibiting means no idle suspend on AC or battery, no screen blank, no
+# screensaver. The original values are saved on the way in and put back on the
+# way out, so this does not hard-code anyone's timeouts.
+
+set -euo pipefail
+
+MODE=notify
+case "${1:-}" in
+  -n|--notify) MODE=notify ;;
+  -q|--quiet)  MODE=quiet ;;
+  -p|--print)  MODE=print ;;
+  -s|--status) MODE=status ;;
+  -h|--help)   sed -n '2,13p' "$0" | sed 's/^# \?//'; exit 0 ;;
+  "")          ;;
+  *)           echo "${0##*/}: unknown option: $1" >&2; exit 2 ;;
+esac
+
+STATE="${XDG_STATE_HOME:-$HOME/.local/state}/toggle-sleep.saved"
+SESSION=org.gnome.desktop.session
+POWER=org.gnome.settings-daemon.plugins.power
+SAVER=org.gnome.desktop.screensaver
+
+if [[ "$MODE" == status ]]; then
+  [[ -f "$STATE" ]] && echo "Sleep inhibited" || echo "Sleep enabled"
+  exit 0
+fi
+
+if [[ -f "$STATE" ]]; then
+  # shellcheck disable=SC1090
+  source "$STATE"
+  gsettings set "$SESSION" idle-delay                  "${OLD_IDLE_DELAY:-300}"
+  gsettings set "$POWER"   sleep-inactive-ac-type      "${OLD_AC_TYPE:-suspend}"
+  gsettings set "$POWER"   sleep-inactive-battery-type "${OLD_BAT_TYPE:-suspend}"
+  gsettings set "$SAVER"   idle-activation-enabled     "${OLD_SAVER:-true}"
+  rm -f "$STATE"
+  MSG="Sleep enabled"
+else
+  mkdir -p "$(dirname "$STATE")"
+  {
+    # idle-delay comes back as "uint32 300"; keep only the number.
+    echo "OLD_IDLE_DELAY=$(gsettings get "$SESSION" idle-delay | awk '{print $NF}')"
+    echo "OLD_AC_TYPE=$(gsettings get "$POWER" sleep-inactive-ac-type | tr -d \"\')"
+    echo "OLD_BAT_TYPE=$(gsettings get "$POWER" sleep-inactive-battery-type | tr -d \"\')"
+    echo "OLD_SAVER=$(gsettings get "$SAVER" idle-activation-enabled)"
+  } > "$STATE"
+  gsettings set "$SESSION" idle-delay                  0
+  gsettings set "$POWER"   sleep-inactive-ac-type      'nothing'
+  gsettings set "$POWER"   sleep-inactive-battery-type 'nothing'
+  gsettings set "$SAVER"   idle-activation-enabled     false
+  MSG="Staying awake -- sleep inhibited"
+fi
+
+case "$MODE" in
+  notify) notify-send -e -t 1500 -a toggle-sleep \
+            -h string:x-canonical-private-synchronous:toggle-sleep "$MSG" ;;
+  print)  printf '%s\n' "$MSG" ;;
+  quiet)  ;;
+esac

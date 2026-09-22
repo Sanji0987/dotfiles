@@ -236,6 +236,7 @@ Key bindings worth knowing:
 | `Super+Return` | kitty |
 | `Super+Shift+M` | toggle animations (`bin/toggle-animations`) |
 | `Super+Shift+P` | toggle the panel between 60 Hz and 144 Hz (`bin/toggle-refresh-rate`) |
+| `Super+Shift+S` | toggle sleep inhibit -- caffeine (`bin/toggle-sleep`) |
 | `Super` alone | nothing — deliberately freed |
 
 ## Refresh rate
@@ -272,9 +273,24 @@ Mirrors the convention the other branches use — `config/` maps onto `~/.config
 | `dconf/` | — (reference dumps) |
 | `bin/toggle-animations` | `~/.local/bin/` |
 | `bin/toggle-refresh-rate` | `~/.local/bin/` |
+| `bin/toggle-sleep` | `~/.local/bin/` |
 | `config/gtk-4.0/settings.ini` | `~/.config/gtk-4.0/` |
 | `config/gtk-3.0/settings.ini` | `~/.config/gtk-3.0/` |
 | `config/kitty/` | `~/.config/kitty/` |
+
+Every `bin/` toggle takes the same flags, so they are usable from a script or a
+bar module as well as from a keybind:
+
+```
+-n, --notify   desktop notification (default)
+-q, --quiet    change it, say nothing
+-p, --print    print the new state to stdout
+-s, --status   report state, change nothing   (toggle-sleep, toggle-refresh-rate)
+-h, --help
+```
+
+Notifications carry `x-canonical-private-synchronous`, so holding a key down
+replaces the banner rather than stacking a queue of them.
 
 `gsettings.sh` is the same idea as the `laptop` branch's script of that name,
 but it does more than gsettings: it also re-registers the custom keybindings

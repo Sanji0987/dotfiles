@@ -1,6 +1,12 @@
 #!/usr/bin/python3
 """Toggle the built-in panel between 60 Hz and 144 Hz.
 
+  -n, --notify   desktop notification (default)
+  -q, --quiet    change the mode, say nothing
+  -p, --print    print the new rate to stdout instead of notifying
+  -s, --status   report the current rate and change nothing
+  -h, --help     this text
+
 There is no gsettings key for refresh rate -- under Wayland the only way in is
 mutter's DisplayConfig D-Bus API, so this talks to it directly.
 
@@ -21,16 +27,48 @@ CROSSOVER = 100.0  # anything above this counts as "currently on high"
 APPLY_PERSISTENT = 2
 
 
-def notify(msg):
+MODE = "notify"
+
+
+def say(msg):
+    """Report according to the mode chosen on the command line."""
+    if MODE == "quiet":
+        return
+    if MODE in ("print", "status"):
+        print(msg)
+        return
     try:
         Gio.Subprocess.new(
-            ["notify-send", "-e", "-t", "1500", msg], Gio.SubprocessFlags.NONE
+            # The synchronous hint makes a repeated press REPLACE the banner
+            # instead of stacking a new one behind it.
+            ["notify-send", "-e", "-t", "1500", "-a", "toggle-refresh-rate",
+             "-h", "string:x-canonical-private-synchronous:toggle-refresh-rate",
+             msg],
+            Gio.SubprocessFlags.NONE,
         )
     except GLib.Error:
         print(msg)
 
 
+def parse_args(argv):
+    global MODE
+    flags = {"-n": "notify", "--notify": "notify", "-q": "quiet",
+             "--quiet": "quiet", "-p": "print", "--print": "print",
+             "-s": "status", "--status": "status"}
+    if not argv:
+        return
+    a = argv[0]
+    if a in ("-h", "--help"):
+        print(__doc__.strip())
+        raise SystemExit(0)
+    if a not in flags:
+        print(f"toggle-refresh-rate: unknown option: {a}", file=sys.stderr)
+        raise SystemExit(2)
+    MODE = flags[a]
+
+
 def main():
+    parse_args(sys.argv[1:])
     proxy = Gio.DBusProxy.new_for_bus_sync(
         Gio.BusType.SESSION, Gio.DBusProxyFlags.NONE, None,
         "org.gnome.Mutter.DisplayConfig", "/org/gnome/Mutter/DisplayConfig",
@@ -43,7 +81,7 @@ def main():
     # The logical monitor we are changing: primary if flagged, else the first.
     lm = next((l for l in logical if l[4]), logical[0] if logical else None)
     if lm is None:
-        notify("Refresh: no monitor found")
+        say("Refresh: no monitor found")
         return 1
     x, y, scale, transform, primary, lm_monitors, _lprops = lm
     connector = lm_monitors[0][0]
@@ -59,20 +97,23 @@ def main():
                 current = (mode_id, w, h, rr)
 
     if current is None:
-        notify(f"Refresh: no current mode on {connector}")
+        say(f"Refresh: no current mode on {connector}")
         return 1
 
     _cur_id, cw, ch, cur_rr = current
+    if MODE == "status":
+        say(f"{cur_rr:.0f} Hz")
+        return 0
     target = LOW if cur_rr >= CROSSOVER else HIGH
 
     # Stay at the current resolution; take the mode closest to the target rate.
     same_res = [m for m in modes if (m[1], m[2]) == (cw, ch)]
     best = min(same_res, key=lambda m: abs(m[3] - target))
     if abs(best[3] - target) > 5.0:
-        notify(f"Refresh: no ~{target:.0f} Hz mode at {cw}x{ch}")
+        say(f"Refresh: no ~{target:.0f} Hz mode at {cw}x{ch}")
         return 1
     if best[0] == _cur_id:
-        notify(f"Refresh: already {cur_rr:.0f} Hz")
+        say(f"Refresh: already {cur_rr:.0f} Hz")
         return 0
 
     config = GLib.Variant(
@@ -85,10 +126,10 @@ def main():
         proxy.call_sync("ApplyMonitorsConfig", config,
                         Gio.DBusCallFlags.NONE, -1, None)
     except GLib.Error as e:
-        notify(f"Refresh: failed -- {e.message}")
+        say(f"Refresh: failed -- {e.message}")
         return 1
 
-    notify(f"{best[3]:.0f} Hz")
+    say(f"{best[3]:.0f} Hz")
     return 0
 
 
