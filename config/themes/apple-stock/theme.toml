@@ -1,0 +1,5 @@
+# Metadata for bin/theme-menu. Colours live in the sibling files.
+label = "Apple Stock"
+note  = "Neutral near-black carried by alpha; one blue, used only for selection."
+accent = "#0860f2"
+kitty  = "glass.conf"

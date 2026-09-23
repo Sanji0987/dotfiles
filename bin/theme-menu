@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+# Pick a desktop theme from a menu.
+#
+#   theme-menu            rofi picker (default)
+#   theme-menu --gtk      zenity dialog instead
+#   theme-menu -h|--help  this text
+#
+# rofi is the default rather than a GTK dialog for one reason: it is already
+# part of this desktop and already themed, so the picker looks like the thing
+# it is changing. zenity is offered because it is a real GTK dialog and does
+# not depend on rofi being installed -- useful if rofi is what you are breaking.
+#
+# Both routes end in `theme-set <name>`, which does the actual work.
+
+set -euo pipefail
+
+REPO="${DOTFILES:-$HOME/dotfiles}"
+THEMES="$REPO/config/themes"
+
+case "${1:-}" in
+  --gtk) UI=gtk ;;
+  -h|--help) sed -n '2,15p' "$0" | sed 's/^# \?//'; exit 0 ;;
+  "") UI=rofi ;;
+  *)  echo "${0##*/}: unknown option: $1" >&2; exit 2 ;;
+esac
+
+active=$(readlink "$THEMES/current" 2>/dev/null || true)
+
+# name<TAB>label<TAB>note, one per theme.
+rows=$(for d in "$THEMES"/*/; do
+  n=$(basename "$d")
+  [[ "$n" == current ]] && continue
+  [[ -f "$d/theme.toml" ]] || continue
+  l=$(sed -n 's/^label *= *"\(.*\)"/\1/p' "$d/theme.toml")
+  o=$(sed -n 's/^note *= *"\(.*\)"/\1/p' "$d/theme.toml")
+  printf '%s\t%s\t%s\n' "$n" "${l:-$n}" "$o"
+done)
+[[ -n "$rows" ]] || { echo "${0##*/}: no themes found in $THEMES" >&2; exit 1; }
+
+if [[ "$UI" == gtk ]]; then
+  # zenity's list returns the first column, so name goes first and is hidden.
+  mapfile -t args < <(while IFS=$'\t' read -r n l o; do
+      printf '%s\n%s\n%s\n' "$n" "$l$([[ "$n" == "$active" ]] && echo '  (current)')" "$o"
+    done <<<"$rows")
+  choice=$(zenity --list --title="Desktop theme" --text="Pick a theme" \
+      --column=name --column=Theme --column=Description \
+      --hide-column=1 --print-column=1 --width=520 --height=280 \
+      "${args[@]}" 2>/dev/null) || exit 0
+else
+  # A marker on the active row, and the note as rofi's per-row message.
+  menu=$(while IFS=$'\t' read -r n l o; do
+      mark=$([[ "$n" == "$active" ]] && printf '●' || printf '○')
+      printf '%s %s\t%s\n' "$mark" "$l" "$n"
+    done <<<"$rows")
+  choice=$(cut -f1 <<<"$menu" | rofi -dmenu -i -p "Theme" -no-custom \
+      -mesg "Current: ${active:-none}" 2>/dev/null) || exit 0
+  [[ -n "$choice" ]] || exit 0
+  choice=$(awk -F'\t' -v c="$choice" '$1==c{print $2}' <<<"$menu")
+fi
+
+[[ -n "${choice:-}" ]] || exit 0
+exec "$REPO/bin/theme-set" "$choice"

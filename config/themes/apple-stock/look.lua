@@ -1,0 +1,9 @@
+-- Apple Stock -- window geometry.
+--
+-- Intentionally empty. conf/theme.lua's own values ARE this look: rounding 10,
+-- gaps 3/7, 1px borders at 22%/6% white, opaque windows, blur size 12, and a
+-- range-9 shadow. Nothing to merge over.
+--
+-- This file exists so every theme has the same file set and bin/theme-set can
+-- load one unconditionally. A theme that changes geometry puts it here; see
+-- rainynight/look.lua.

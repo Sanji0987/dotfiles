@@ -25,15 +25,15 @@
  * repalletted with conf/palette.lua: neutral greys carried by alpha, one blue
  * used only for selection. Same values as config/rofi/spotlight.rasi,
  * config/mako/config and config/hypr/hyprlock.conf — edit together. */
-@define-color background  #000000;
-@define-color surface     #1a1a1a;
-@define-color foreground  #dedede;
-@define-color bright      #ffffff;
-@define-color muted       #7e7e7e;
-@define-color border      #393939;
-@define-color border_lit  #707070;
-@define-color accent      #0860f2;
-@define-color red         #e05561;
+/* edited by claude opus 5
+ * palette moved out to a switchable theme directory
+ *
+ * The nine colours that were written here now live in
+ * config/themes/<name>/waybar.css, and this import follows the `current`
+ * symlink that bin/theme-set repoints. Absolute path because GTK CSS
+ * resolves @import relative to the importing file, and this file is reached
+ * through a symlink -- a relative path would resolve somewhere surprising. */
+@import "/home/monke/dotfiles/config/themes/current/waybar.css";
 
 * {
   font-family: "Inter", "JetBrainsMono Nerd Font";

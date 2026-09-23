@@ -1,0 +1,15 @@
+/* Apple Stock -- rofi palette.
+ * Imported by config/rofi/spotlight.rasi. Colours only; geometry stays there.
+ *
+ * bg0 is deliberately near-transparent: the launcher is legible because
+ * conf/rules.lua blurs the rofi layer, not because the sheet is opaque. */
+* {
+    bg0:  #00000033;
+    bg1:  #70707080;
+    bg2:  #00000055;
+
+    fg0:  #dedede;
+    fg1:  #ffffff;
+    fg2:  #dedede80;
+    fg3:  #0860f2;
+}

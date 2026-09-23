@@ -1,0 +1,5 @@
+# Metadata for bin/theme-menu. Colours live in the sibling files.
+label = "Rainy Night"
+note  = "Catppuccin-Mocha derived: blue-grey surfaces, lavender-blue accent."
+accent = "#89b4fa"
+kitty  = "rainynight.conf"

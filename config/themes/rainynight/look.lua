@@ -1,4 +1,8 @@
--- Per-theme look override: rainynight.
+-- Rainy Night -- window geometry, merged over conf/theme.lua.
+--
+-- Moved here from conf/themes/rainynight.lua when themes became switchable;
+-- the values are unchanged.
+--
 --
 -- Ported by hand from the theme's own hyprland.conf (atif-1402/omarchy-rainynight-theme).
 -- It has to be ported rather than loaded, for two reasons:
@@ -47,10 +51,25 @@ hl.config({
         -- A bright blur -- brightness and contrast above 1 -- which is what
         -- gives the translucent panels their lit, rained-on look. The base
         -- look darkens instead (brightness 0.72).
+        -- edited by claude opus 5
+        -- size 1 -> 10: the original value predates the layer blur this
+        -- desktop now depends on
+        --
+        -- size 1 is a one-pixel kernel -- effectively no blur at all, with the
+        -- four passes grinding over nothing. That was survivable when this
+        -- theme was vendored, because nothing was blurred then. Now the bar,
+        -- the launcher, notifications and the OSD are all blurred layers, and
+        -- at size 1 every one of them renders flat. 10 is a touch below the
+        -- base look's 12, which keeps this theme's softer feel without
+        -- throwing the glass away.
+        --
+        -- The rest of the block is untouched: the bright blur (contrast and
+        -- brightness above 1) is this theme's signature and is why it reads
+        -- lit rather than darkened.
         blur = {
             enabled           = true,
-            size              = 1,
-            passes            = 4,
+            size              = 10,
+            passes            = 3,
             contrast          = 1.1,
             brightness        = 1.1,
             vibrancy          = 0.2,

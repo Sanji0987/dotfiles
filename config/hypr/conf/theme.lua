@@ -159,19 +159,13 @@ hl.config({
 })
 
 -- edited by claude opus 5
--- rainynight kept as a switchable look rather than deleted, so going back is
--- uncommenting one line
+-- the look override now comes from the active theme, not a hardcoded name
 --
--- Everything above is the active look: the neutral "glass" one. An override
--- file merges over it, so a look only has to state what it changes.
+-- Everything above is the base look. Each theme ships a look.lua that merges
+-- over it: apple-stock/look.lua is deliberately empty (the values above ARE
+-- that look), rainynight/look.lua carries rounding 14, 0.93/0.92 opacity,
+-- indigo borders and its own blur.
 --
---   conf/themes/rainynight.lua   rounding 14, 0.93/0.92 opacity, indigo
---                                borders, a near-zero blur — the Catppuccin
---                                -derived look this desktop used before
---
--- To switch, uncomment the require below and run `hyprctl reload`. Note the
--- rest of the desktop does NOT follow: the bar, launcher, notifications, OSD
--- and terminal carry their own copies of the palette (see README.md), so a
--- full switch means changing those too.
---
--- require("conf.themes.rainynight")
+-- dofile for the same reason as conf/palette.lua: require would cache it and
+-- survive a theme switch.
+dofile("/home/monke/dotfiles/config/themes/current/look.lua")

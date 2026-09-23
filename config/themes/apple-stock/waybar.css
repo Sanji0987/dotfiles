@@ -1,0 +1,11 @@
+/* Apple Stock -- waybar palette.
+ * Imported by config/waybar/style.css. Colours only; no geometry. */
+@define-color background  #000000;
+@define-color surface     #1a1a1a;
+@define-color foreground  #dedede;
+@define-color bright      #ffffff;
+@define-color muted       #7e7e7e;
+@define-color border      #393939;
+@define-color border_lit  #707070;
+@define-color accent      #0860f2;
+@define-color red         #e05561;

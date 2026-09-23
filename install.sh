@@ -61,7 +61,8 @@ done
 for b in hermes update-appimage env env.fish \
          agent-usage-update agent-usage-claude agent-usage-codex \
          agent-usage-fireworks waybar-claude \
-         toggle-refresh-rate toggle-sleep toggle-animations; do
+         toggle-refresh-rate toggle-sleep toggle-animations \
+         theme-set theme-menu; do
   link "bin/$b" "$HOME/.local/bin/$b"
 done
 

@@ -196,22 +196,35 @@ look. Requires `conf.palette` as `t` and `conf.colors` as `c`.
 - Group bars (tabbed groups) take the same grey border as ordinary windows; the
   bar itself still uses the old `colors.lua` values (`slate` active, `red` locked).
 
-The tail of the file documents the one alternative look and leaves its
-`require("conf.themes.rainynight")` **commented out**. It is a manual switch, not
-a pipeline: nothing selects a theme, and nothing follows if you flip it.
+<!-- edited by claude opus 5 -->
+<!-- themes became switchable; this section described the dormant-require
+     arrangement that replaced -->
 
-### `conf/themes/rainynight.lua`
-Dormant. The Catppuccin-derived look this desktop used before — rounding 14,
-0.93/0.92 opacity, indigo borders (`rgb(303463)` / `rgb(1a1b26)`), and a bright
-blur (contrast and brightness 1.1, size 1, 4 passes) where the active look is
-wide, soft and neutral. It merges over `theme.lua`, so it only states what it
-changes.
+The tail of the file `dofile`s `config/themes/current/look.lua` — the geometry
+override belonging to whichever theme is active.
 
-It is **not loaded**: the `require` in `theme.lua` is commented out, and there is
-no theme-slug lookup left to load it automatically. Uncomment that line and
-`hyprctl reload` to switch. Note the rest of the desktop does *not* follow — the
-bar, launcher, notifications, OSD and terminal each carry their own copy of the
-palette, so a real switch means editing all of them (see below).
+### Themes
+
+`conf/themes/` is gone. A theme is now a directory under `config/themes/`, and
+`config/themes/current` is a symlink naming the active one:
+
+| file | reaches Hyprland through |
+|---|---|
+| `palette.lua` | `conf/palette.lua`, a shim that `dofile`s it |
+| `look.lua` | the tail of `conf/theme.lua` |
+
+Both use `dofile`, not `require`, deliberately: `require` caches by module name,
+so after a theme switch a `hyprctl reload` would keep serving the previous
+theme's table out of `package.loaded`.
+
+`apple-stock/look.lua` is intentionally empty — `theme.lua`'s own values *are*
+that look. `rainynight/look.lua` carries rounding 14, 0.93/0.92 opacity and
+indigo borders.
+
+Switching is `theme-set <name>` (or `SUPER+SHIFT+T` for the picker), which
+repoints the symlink and reloads. Unlike before, the rest of the desktop **does**
+follow: waybar, rofi, swayosd and hyprlock all read through the same symlink,
+and mako and kitty are copied because neither supports an include.
 
 ### `conf/animations.lua`
 Hyprland's default curve set (`easeOutQuint`, `easeInOutCubic`, `linear`,

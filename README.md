@@ -63,34 +63,50 @@ teardown, one layer each.
 
 ## Theming
 
-There is no theme pipeline. Every palette is a tracked, hand-written file, and
-they are kept in step by being edited together:
+Themes are switchable. `SUPER+SHIFT+T` opens a picker, or:
 
-| file | what it colours |
+```sh
+theme-set --list          # apple-stock, rainynight
+theme-set rainynight
+theme-set --status
+theme-menu --gtk          # zenity dialog instead of rofi
+```
+
+A theme is a directory of hand-written colour files under `config/themes/`, and
+`config/themes/current` is a symlink naming the active one. Nothing is generated
+or templated — switching repoints the symlink and reloads.
+
+| file in a theme | reaches the app by |
 |---|---|
-| `config/hypr/conf/palette.lua` | window borders (via `conf/theme.lua`) |
-| `config/hypr/conf/theme.lua` | rounding, gaps, blur, opacity — the window look itself |
-| `config/hypr/hyprlock.conf` | lock screen |
-| `config/waybar/style.css` | bar |
-| `config/mako/config` | notifications |
-| `config/rofi/spotlight.rasi` | launcher |
-| `config/swayosd/style.css` | volume / media OSD |
-| `config/kitty/current-theme.conf` | terminal (and fastfetch, through ANSI names) |
+| `palette.lua` | `conf/palette.lua` shim (`dofile`) |
+| `look.lua` | tail of `conf/theme.lua` (`dofile`) |
+| `hyprlock.conf` | `source =` |
+| `waybar.css` | `@import` |
+| `rofi.rasi` | `@import` |
+| `swayosd.css` | `@import` |
+| `mako.config` | **copied** — mako has no include directive |
+| `theme.toml` | metadata; also names which kitty theme to copy in |
 
-The scheme is deliberately colourless: near-black surfaces carried by alpha,
-focus shown as a step between two greys (`707070` / `393939`), and one blue used
-only for selection. The wallpaper supplies the colour; the chrome does not.
+Six of the eight follow the symlink live. Only mako and kitty are copies, and
+only because neither can include a file — which means mako's geometry is
+duplicated per theme, the one place a layout change has to be made twice.
 
-### Switching back
+`dofile` rather than `require` for the two Lua files is deliberate: `require`
+caches by module name, so after a switch a `hyprctl reload` would keep serving
+the previous theme out of `package.loaded`.
 
-The previous look — Catppuccin-derived "rainynight", 14px rounding, translucent
-windows, indigo borders — is kept at `config/hypr/conf/themes/rainynight.lua`.
-It is **dormant**: the `require` for it at the tail of `conf/theme.lua` is
-commented out, so uncommenting that line and running `hyprctl reload` restores
-the window look.
+Adding a theme is copying a directory and editing colours. `theme-set` checks
+every required file exists before changing anything, so a half-written theme
+fails cleanly rather than part way through.
 
-Nothing else follows automatically. Each file in the table above holds its own
-copy of the palette, so a full switch means editing those too.
+The two that ship:
+
+- **apple-stock** — neutral near-black carried by alpha, one blue used only for
+  selection. Rounding 10, opaque windows, wide soft blur.
+- **rainynight** — Catppuccin-Mocha derived: blue-grey surfaces, lavender-blue
+  accent. Rounding 14, 0.93/0.92 opacity, a brighter blur.
+
+Wallpapers are not part of a theme and live in `~/Pictures/Wallpapers/`.
 
 ## Repos this is pieced together from
 
@@ -150,7 +166,8 @@ Then `hyprctl configerrors` to confirm the Lua config loaded clean.
 | `config/mako/` | `~/.config/mako` | notifications |
 | `config/swayosd/` | `~/.config/swayosd` | volume / media OSD |
 | `config/kitty/` | `~/.config/kitty` | kitty; `current-theme.conf` holds the live palette |
-| `config/kitty/themes/` | — | per-theme palette extracts, kept for reference |
+| `config/kitty/themes/` | — | kitty palettes; `theme-set` copies the right one in |
+| `config/themes/` | — | the switchable themes; `current` symlinks the active one |
 | `config/nvim/` | `~/.config/nvim` | LazyVim |
 | `config/fastfetch/` | `~/.config/fastfetch` | coloured through the terminal palette |
 | `config/fish/`, `home/.zshrc`, `home/.p10k.zsh` | | shells — zsh + p10k is the daily driver |

@@ -1,0 +1,5 @@
+/* Apple Stock -- swayosd palette.
+ * Imported by config/swayosd/style.css. */
+@define-color background  #000000;
+@define-color foreground  #dedede;
+@define-color border_lit  #707070;

@@ -38,6 +38,10 @@ hl.bind(mainMod .. " + SHIFT + K", hl.dsp.exec_cmd("toggle-sleep"))
 hl.bind(mainMod .. " + SHIFT + A", hl.dsp.exec_cmd("toggle-animations"))
 
 -- edited by claude opus 5
+-- theme picker; the menu itself is rofi, see bin/theme-menu --gtk for zenity
+hl.bind(mainMod .. " + SHIFT + T", hl.dsp.exec_cmd("theme-menu"))
+
+-- edited by claude opus 5
 -- screenshots move to SUPER+SHIFT+S (region) and SUPER+SHIFT+PgUp (screen);
 -- the old SUPER+SHIFT+P region bind is retired
 --

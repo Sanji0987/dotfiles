@@ -1,0 +1,15 @@
+/* Rainy Night -- rofi palette.
+ * Imported by config/rofi/spotlight.rasi. Colours only; geometry stays there.
+ *
+ * bg0 is deliberately near-transparent: the launcher is legible because
+ * conf/rules.lua blurs the rofi layer, not because the sheet is opaque. */
+* {
+    bg0:  #1e1e2e33;
+    bg1:  #6c708680;
+    bg2:  #1e1e2e55;
+
+    fg0:  #cdd6f4;
+    fg1:  #ffffff;
+    fg2:  #cdd6f480;
+    fg3:  #89b4fa;
+}

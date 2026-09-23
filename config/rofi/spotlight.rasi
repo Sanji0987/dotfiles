@@ -21,17 +21,16 @@
  * config/hypr/conf/palette.lua. Edit together.
  */
 
+@import "/home/monke/dotfiles/config/themes/current/rofi.rasi"
+
+/* edited by claude opus 5
+ * colours moved to the switchable theme directory; geometry stays here
+ *
+ * The bg and fg values are defined by the import above -- writing them as
+ * bg*/fg* here would close this comment early, since */ ends it. Everything
+ * below is layout and does not change between themes. */
 * {
     font-family: "Inter";
-
-    bg0:  #00000033;   /* the sheet: nearly clear, blurred by the compositor */
-    bg1:  #7e7e7e80;   /* hairlines                                          */
-    bg2:  #00000055;   /* selected row                                       */
-
-    fg0:  #dedede;     /* normal text                                        */
-    fg1:  #ffffff;     /* selected text                                      */
-    fg2:  #dedede80;   /* placeholder                                        */
-    fg3:  #0860f2;     /* running / active entries                           */
 
     background-color: transparent;
     text-color:       @fg0;

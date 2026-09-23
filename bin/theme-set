@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+# Switch the desktop theme.
+#
+#   theme-set <name>     apply a theme
+#   theme-set -l|--list  list available themes
+#   theme-set -s|--status  print the active theme
+#   theme-set -h|--help  this text
+#
+# A theme is a directory under config/themes/ holding colour files. Switching
+# repoints config/themes/current at it and reloads whatever reads through that
+# symlink -- nothing is generated, nothing is templated, every file in a theme
+# directory is hand-written and tracked.
+#
+# Six of the seven consumers follow the symlink natively and need no copy:
+#   hyprland   conf/palette.lua dofiles current/palette.lua
+#              conf/theme.lua   dofiles current/look.lua
+#   hyprlock   source =         current/hyprlock.conf
+#   waybar     @import          current/waybar.css
+#   rofi       @import          current/rofi.rasi
+#   swayosd    @import          current/swayosd.css
+#
+# The two that cannot:
+#   mako    has no include directive at all -> the file is COPIED
+#   kitty   includes current-theme.conf, which is a copy by design so a
+#           per-terminal override can be dropped in without editing a theme
+#
+# So a switch is: repoint symlink, copy those two, reload four daemons.
+
+set -euo pipefail
+
+REPO="${DOTFILES:-$HOME/dotfiles}"
+THEMES="$REPO/config/themes"
+CURRENT="$THEMES/current"
+
+list_themes() { find "$THEMES" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort; }
+
+case "${1:-}" in
+  -l|--list)   list_themes; exit 0 ;;
+  -s|--status) readlink "$CURRENT" 2>/dev/null || echo "none"; exit 0 ;;
+  -h|--help)   sed -n '2,28p' "$0" | sed 's/^# \?//'; exit 0 ;;
+  "")          echo "usage: ${0##*/} <name>   (--list to see them)" >&2; exit 2 ;;
+esac
+
+NAME="$1"
+DIR="$THEMES/$NAME"
+[[ -d "$DIR" ]] || { echo "${0##*/}: no such theme: $NAME" >&2; list_themes >&2; exit 1; }
+
+# Every file a theme must provide. Checked up front so a half-written theme
+# fails before anything is changed rather than half way through.
+for f in palette.lua look.lua hyprlock.conf waybar.css rofi.rasi swayosd.css mako.config theme.toml; do
+  [[ -f "$DIR/$f" ]] || { echo "${0##*/}: $NAME is missing $f" >&2; exit 1; }
+done
+
+# Relative target, so the symlink stays valid if the repo moves.
+ln -sfn "$NAME" "$CURRENT"
+
+cp "$DIR/mako.config" "$REPO/config/mako/config"
+
+# kitty: the theme names which palette it wants; they share one key set.
+kitty_theme=$(sed -n 's/^kitty *= *"\(.*\)"/\1/p' "$DIR/theme.toml")
+if [[ -n "$kitty_theme" && -f "$REPO/config/kitty/themes/$kitty_theme" ]]; then
+  cp "$REPO/config/kitty/themes/$kitty_theme" "$REPO/config/kitty/current-theme.conf"
+fi
+
+# --- reload ---------------------------------------------------------------
+# Each of these re-reads its config from scratch; none of them watch the file.
+hyprctl reload >/dev/null 2>&1 || true
+
+pkill -x waybar >/dev/null 2>&1 || true
+setsid waybar >/dev/null 2>&1 </dev/null & disown
+
+pkill -x mako >/dev/null 2>&1 || true
+setsid mako >/dev/null 2>&1 </dev/null & disown
+
+pkill -x swayosd-server >/dev/null 2>&1 || true
+setsid swayosd-server >/dev/null 2>&1 </dev/null & disown
+
+# kitty reloads its own config in place, no restart needed.
+pkill -USR1 -x kitty >/dev/null 2>&1 || true
+
+label=$(sed -n 's/^label *= *"\(.*\)"/\1/p' "$DIR/theme.toml")
+notify-send -e -t 2000 -a theme-set \
+  -h string:x-canonical-private-synchronous:theme-set \
+  "Theme: ${label:-$NAME}" 2>/dev/null || true
+echo "${label:-$NAME}"

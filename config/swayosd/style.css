@@ -14,11 +14,20 @@
  * config/mako/config and config/hypr/conf/palette.lua. Edit together.
  */
 
+/* edited by claude opus 5
+ * colours moved to the switchable theme directory
+ *
+ * The five inline rgba()/hex values that were here are now @background,
+ * @foreground and @border_lit, defined by the import. alpha() takes a named
+ * colour, so the transparency stays here where it belongs -- a theme sets the
+ * hue, this file decides how see-through it is. */
+@import "/home/monke/dotfiles/config/themes/current/swayosd.css";
+
 window#osd {
   padding: 12px 20px;
-  border: 1px solid rgba(112, 112, 112, 0.35);
+  border: 1px solid alpha(@border_lit, 0.35);
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.8);
+  background: alpha(@background, 0.8);
 }
 
 window#osd #container {
@@ -27,7 +36,7 @@ window#osd #container {
 
 window#osd image,
 window#osd label {
-  color: #dedede;
+  color: @foreground;
 }
 
 window#osd label {
@@ -59,7 +68,7 @@ window#osd trough {
   min-width: 1px;
   border-radius: 999px;
   border: none;
-  background: rgba(222, 222, 222, 0.28);
+  background: alpha(@foreground, 0.28);
 }
 
 window#osd progress {
@@ -67,5 +76,5 @@ window#osd progress {
   min-width: 1px;
   border-radius: 999px;
   border: none;
-  background: #dedede;
+  background: @foreground;
 }
