@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+# Re-apply local overrides on top of the WhiteSur shell theme.
+#
+#   -r, --revert   remove the override block
+#   -s, --status   say whether it is applied
+#   -h, --help     this text
+#
+# WhiteSur's gnome-shell.css replaces the Activities button with a static icon
+# and sets `.workspace-dot { background-color: transparent }`, which hides the
+# GNOME 45+ workspace indicator completely. This puts the dots back.
+#
+# Lives here rather than in the theme because `install.sh` rewrites
+# gnome-shell.css wholesale -- re-run this after any WhiteSur reinstall, the
+# same way `tweaks.sh -d` has to be re-run after a Dash to Dock package update.
+
+set -euo pipefail
+
+BEGIN='/* >>> dotfiles override: workspace dots >>> */'
+END='/* <<< dotfiles override: workspace dots <<< */'
+
+MODE=apply
+case "${1:-}" in
+  -r|--revert) MODE=revert ;;
+  -s|--status) MODE=status ;;
+  -h|--help)   sed -n '2,15p' "$0" | sed 's/^# \?//'; exit 0 ;;
+  "")          ;;
+  *)           echo "${0##*/}: unknown option: $1" >&2; exit 2 ;;
+esac
+
+theme=$(gsettings get org.gnome.shell.extensions.user-theme name | tr -d \"\')
+[[ -n "$theme" ]] || { echo "${0##*/}: no user-theme set" >&2; exit 1; }
+CSS="$HOME/.themes/$theme/gnome-shell/gnome-shell.css"
+[[ -f "$CSS" ]] || { echo "${0##*/}: no such file: $CSS" >&2; exit 1; }
+
+applied() { grep -qF "$BEGIN" "$CSS"; }
+
+case "$MODE" in
+status) applied && echo "applied to $theme" || echo "not applied to $theme"; exit 0 ;;
+revert) applied || { echo "  nothing to revert"; exit 0; }
+        sed -i "\#${BEGIN}#,\#${END}#d" "$CSS"
+        echo "  override removed from $theme" ;;
+apply)  applied && { echo "  already applied to $theme"; exit 0; }
+        cat >> "$CSS" <<CSSEOF
+
+$BEGIN
+/* WhiteSur blanks the workspace dots and swaps the button for a static icon.
+   Undo just that much: drop the icon, let the button size itself again, and
+   give the dots a visible colour.
+
+   Colour ONLY -- no min-width, no min-height. GNOME sizes the active dot
+   programmatically (it renders as a longer pill), so setting geometry here
+   would flatten the active/inactive distinction rather than style it. */
+#panel .panel-button#panelActivities {
+  background-image: none;
+  width: auto;
+  height: auto;
+  color: inherit;
+  font-size: inherit;
+}
+
+#panel .panel-button#panelActivities > * {
+  width: auto;
+}
+
+#panel .panel-button#panelActivities StBoxLayout {
+  spacing: 5px;
+  padding: 0 4px;
+}
+
+#panel .panel-button#panelActivities .workspace-dot {
+  background-color: rgba(255, 255, 255, 0.85);
+  border-radius: 999px;
+}
+$END
+CSSEOF
+        echo "  override appended to $theme" ;;
+esac
+
+# Force the shell to re-read the stylesheet. Wayland cannot restart the shell,
+# but bouncing the theme name reloads the CSS in place.
+cur=$(gsettings get org.gnome.shell.extensions.user-theme name)
+gsettings set org.gnome.shell.extensions.user-theme name ''
+sleep 1
+gsettings set org.gnome.shell.extensions.user-theme name "$cur"
+echo "  stylesheet reloaded"

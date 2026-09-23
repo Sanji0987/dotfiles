@@ -104,7 +104,11 @@ fi
 JP=org.gnome.shell.extensions.just-perfection
 if gsettings list-schemas | grep -qx "$JP"; then
   say "just perfection"
-  gsettings set $JP activities-button            false
+  # TRUE on purpose. In GNOME 45+ this element IS the workspace indicator --
+  # the dots. gnomintosh sets it false for the macOS look, which also loses the
+  # indicator; the dots are worth more than the empty corner. bin/patch-shell-theme
+  # makes them visible again, because WhiteSur blanks them.
+  gsettings set $JP activities-button            true
   gsettings set $JP clock-menu-position          1    # 0 centre, 1 right, 2 left
   gsettings set $JP clock-menu-position-offset   20
   gsettings set $JP window-demands-attention-focus true
@@ -163,6 +167,15 @@ if [[ -f "$HOME/.config/gtk-4.0/gtk-Dark.css" ]]; then
   echo "    linked gtk.css and gtk-dark.css -> gtk-Dark.css"
 else
   echo "  !! gtk-Dark.css missing -- run WhiteSur install.sh -l first" >&2
+fi
+
+# --- shell theme override -----------------------------------------------------
+# WhiteSur's gnome-shell.css hides the workspace dots outright. This puts them
+# back. Kept out of the theme itself because install.sh rewrites that file --
+# re-run after any WhiteSur reinstall, like `tweaks.sh -d`.
+if [[ -x "$HOME/.local/bin/patch-shell-theme" ]]; then
+  say "shell theme override"
+  "$HOME/.local/bin/patch-shell-theme" || true
 fi
 
 say "done. Log out and back in (Wayland cannot restart the shell in place)."

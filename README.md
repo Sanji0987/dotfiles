@@ -274,6 +274,37 @@ Two things the wrapper handles that a bare `gdctl set` does not:
 `monitors.xml` is NOT committed -- it names the panel by vendor/product/serial
 and is meaningless on any other machine.
 
+## Workspace indicator
+
+Four static workspaces, and the indicator for them is the dots in the top-left
+panel corner. Getting those to show took two changes that fight each other:
+
+- **Just Perfection's `activities-button` must be `true`.** In GNOME 45+ that
+  element *is* the workspace indicator. gnomintosh sets it `false` for the
+  macOS look, which silently takes the dots with it.
+- **WhiteSur blanks the dots anyway.** Its `gnome-shell.css` swaps the button
+  for a static `activities.svg` and sets
+  `.workspace-dot { background-color: transparent }`.
+
+`bin/patch-shell-theme` appends a marker-delimited override that drops the
+static icon and gives the dots a visible colour. It sets **colour only** — no
+`min-width`/`min-height`, because GNOME sizes the active dot programmatically
+(it renders as a longer pill), so pinning geometry in CSS would flatten the
+active/inactive distinction instead of styling it.
+
+```sh
+patch-shell-theme            # apply (idempotent)
+patch-shell-theme --status   # is it applied?
+patch-shell-theme --revert   # take it back out
+```
+
+It reloads the stylesheet by bouncing `user-theme name`, since Wayland cannot
+restart the shell in place.
+
+**Re-run it after any WhiteSur reinstall** — `install.sh` rewrites
+`gnome-shell.css` wholesale, exactly like `tweaks.sh -d` has to be re-run after
+a Dash to Dock package update. `gsettings.sh` calls it for you.
+
 ## Screenshots
 
 `Super+Shift+S` is bound to GNOME's own screenshot UI, which opens in
@@ -303,6 +334,7 @@ Mirrors the convention the other branches use — `config/` maps onto `~/.config
 | `bin/toggle-animations` | `~/.local/bin/` |
 | `bin/toggle-refresh-rate` | `~/.local/bin/` |
 | `bin/toggle-sleep` | `~/.local/bin/` |
+| `bin/patch-shell-theme` | `~/.local/bin/` |
 | `config/gtk-4.0/settings.ini` | `~/.config/gtk-4.0/` |
 | `config/gtk-3.0/settings.ini` | `~/.config/gtk-3.0/` |
 | `config/kitty/` | `~/.config/kitty/` |
