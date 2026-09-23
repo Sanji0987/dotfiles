@@ -26,9 +26,13 @@
 /* edited by claude opus 5
  * colours moved to the switchable theme directory; geometry stays here
  *
- * The bg and fg values are defined by the import above -- writing them as
- * bg*/fg* here would close this comment early, since */ ends it. Everything
- * below is layout and does not change between themes. */
+ * The bg and fg values are defined by the import above. Everything below is
+ * layout and does not change between themes.
+ *
+ * Careful with wildcards in these comments: a star followed by a slash ends
+ * the comment wherever it appears, so writing the colour names with trailing
+ * wildcards breaks the file. This comment has been the cause of two parse
+ * errors already. */
 * {
     font-family: "Inter";
 
