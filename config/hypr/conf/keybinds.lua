@@ -21,6 +21,23 @@ hl.bind(mainMod .. " + SHIFT + M", hl.dsp.exit())
 hl.bind(mainMod .. " + SHIFT + L", hl.dsp.exec_cmd("pidof " .. apps.lock .. " || " .. apps.lock))
 
 -- edited by claude opus 5
+-- the three toggles ported from the gnome branch, on the same chords where
+-- they were free, so one set of muscle memory covers both machines
+--
+--   SUPER+SHIFT+P   refresh rate, 60 <-> 180 Hz   (same chord as gnome)
+--   SUPER+SHIFT+K   idle inhibit, a caffeine switch (same chord as gnome)
+--   SUPER+SHIFT+A   animations on/off
+--
+-- The gnome branch puts animations on SUPER+SHIFT+M. That chord is taken here
+-- by hl.dsp.exit(), which quits the session -- rebinding it to a cosmetic
+-- toggle would silently remove the only way out. A is the divergence.
+--
+-- Each script also takes -s/--status, -q, -p and -h; see the headers in bin/.
+hl.bind(mainMod .. " + SHIFT + P", hl.dsp.exec_cmd("toggle-refresh-rate"))
+hl.bind(mainMod .. " + SHIFT + K", hl.dsp.exec_cmd("toggle-sleep"))
+hl.bind(mainMod .. " + SHIFT + A", hl.dsp.exec_cmd("toggle-animations"))
+
+-- edited by claude opus 5
 -- screenshots move to SUPER+SHIFT+S (region) and SUPER+SHIFT+PgUp (screen);
 -- the old SUPER+SHIFT+P region bind is retired
 --

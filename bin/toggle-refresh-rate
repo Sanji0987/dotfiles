@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+# Toggle the display between 60 Hz and its highest rate.
+#
+#   -n, --notify   desktop notification (default)
+#   -q, --quiet    change the mode, say nothing
+#   -p, --print    print the new rate to stdout instead of notifying
+#   -s, --status   report the current rate and change nothing
+#   -h, --help     this text
+#
+# Hyprland port of the gnome branch's script of the same name. That one drives
+# `gdctl` (mutter's display CLI); this one drives Hyprland. The CLI and the
+# behaviour are kept the same on purpose, so the same muscle memory works on
+# both machines.
+#
+# NOTE: `hyprctl keyword monitor ...` does NOT work on this machine. The Lua
+# config manager rejects it outright -- "keyword can't work with non-legacy
+# parsers. Use eval." -- and, worse, it says so on stdout while exiting 0, so a
+# script that does not check the output will happily report a change that never
+# happened. Everything goes through `hyprctl eval` and the hl.* API instead.
+#
+# The change is NOT written to conf/display.lua -- an eval applies to the
+# running session only, so `hyprctl reload` or a relogin returns to whatever
+# display.lua says. That is deliberate: this is a "turn it down for a bit"
+# switch, not a config edit.
+
+set -euo pipefail
+
+LOW=60
+CROSSOVER=100   # a current rate above this counts as "on high"
+
+MODE=notify
+case "${1:-}" in
+  -n|--notify) MODE=notify ;;
+  -q|--quiet)  MODE=quiet ;;
+  -p|--print)  MODE=print ;;
+  -s|--status) MODE=status ;;
+  -h|--help)   sed -n '2,18p' "$0" | sed 's/^# \?//'; exit 0 ;;
+  "")          ;;
+  *)           echo "${0##*/}: unknown option: $1" >&2; exit 2 ;;
+esac
+
+say() {
+  case "$MODE" in
+    # The synchronous hint makes a repeated press REPLACE the banner rather
+    # than stack a new one behind it -- the usual trick for OSD-style toggles.
+    notify) notify-send -e -t 1500 -a toggle-refresh-rate \
+              -h string:x-canonical-private-synchronous:toggle-refresh-rate "$1" ;;
+    print|status) printf '%s\n' "$1" ;;
+    quiet)  ;;
+  esac
+}
+
+command -v hyprctl >/dev/null || {
+  echo "${0##*/}: hyprctl not found -- is Hyprland running?" >&2; exit 1; }
+
+# All of the mode arithmetic in one place. Emits shell assignments, so the
+# quoting stays on this side of the fence instead of being threaded through
+# several nested -c strings.
+eval "$(hyprctl monitors -j | python3 -c '
+import json, re, sys
+
+low, crossover = float(sys.argv[1]), float(sys.argv[2])
+m = json.load(sys.stdin)[0]
+w, h, cur = m["width"], m["height"], float(m["refreshRate"])
+
+pat = re.compile(r"^%dx%d@([0-9.]+)Hz$" % (w, h))
+rates = sorted({float(g.group(1)) for x in m["availableModes"] if (g := pat.match(x))})
+
+print("NAME=%s"  % m["name"])
+print("W=%d"     % w)
+print("H=%d"     % h)
+print("SCALE=%s" % m["scale"])
+print("CUR=%.2f" % cur)
+if not rates:
+    print("BEST=")
+else:
+    target = low if cur >= crossover else max(rates)
+    print("BEST=%.2f" % min(rates, key=lambda r: abs(r - target)))
+' "$LOW" "$CROSSOVER")"
+
+[[ -n "${NAME:-}" ]] || { echo "${0##*/}: could not read the current mode" >&2; exit 1; }
+
+if [[ "$MODE" == status ]]; then
+  say "$(printf '%.0f Hz' "$CUR")"
+  exit 0
+fi
+
+[[ -n "$BEST" ]] || { say "No modes found at ${W}x${H}"; exit 1; }
+[[ "$BEST" != "$CUR" ]] || { say "Already $(printf '%.0f' "$CUR") Hz"; exit 0; }
+
+# Scale and position are passed explicitly: hl.monitor rebuilds the whole
+# monitor declaration, so anything omitted reverts to a default.
+#
+# The mode string needs its "Hz" suffix -- that is the form conf/display.lua
+# uses and the form Hyprland reports back.
+out=$(hyprctl eval "hl.monitor({ output = \"${NAME}\", mode = \"${W}x${H}@${BEST}Hz\", position = \"0x0\", scale = \"${SCALE}\" }) return 1" 2>&1)
+
+# hyprctl exits 0 even when it refuses, so the reply is the only real signal.
+if [[ "$out" != *ok* ]]; then
+  echo "${0##*/}: Hyprland refused the mode change: $out" >&2
+  exit 1
+fi
+
+say "$(printf '%.0f Hz' "$BEST")"

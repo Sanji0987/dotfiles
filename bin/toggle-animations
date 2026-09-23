@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# Toggle Hyprland's animations.
+#
+#   -n, --notify   desktop notification (default)
+#   -q, --quiet    change the setting, say nothing
+#   -p, --print    print the new state to stdout instead of notifying
+#   -s, --status   report the current state and change nothing
+#   -h, --help     this text
+#
+# Hyprland port of the gnome branch's script of the same name, which flips
+# org.gnome.desktop.interface enable-animations. Same CLI, same notify
+# behaviour.
+#
+# Like the refresh-rate toggle, this uses `hyprctl eval` rather than
+# `hyprctl keyword`: the Lua config manager refuses keyword outright, and it
+# does so while still exiting 0. Session-only -- `hyprctl reload` restores
+# whatever conf/animations.lua says.
+
+set -euo pipefail
+
+MODE=notify
+case "${1:-}" in
+  -n|--notify) MODE=notify ;;
+  -q|--quiet)  MODE=quiet ;;
+  -p|--print)  MODE=print ;;
+  -s|--status) MODE=status ;;
+  -h|--help)   sed -n '2,18p' "$0" | sed 's/^# \?//'; exit 0 ;;
+  "")          ;;
+  *)           echo "${0##*/}: unknown option: $1" >&2; exit 2 ;;
+esac
+
+command -v hyprctl >/dev/null || {
+  echo "${0##*/}: hyprctl not found -- is Hyprland running?" >&2; exit 1; }
+
+# getoption reports this one as "bool: true", not "int: 1" -- the type varies
+# per option, so match the value rather than the type.
+enabled=$(hyprctl getoption animations:enabled 2>/dev/null | awk -F': ' '/^(bool|int):/{print $2; exit}')
+[[ -n "$enabled" ]] || { echo "${0##*/}: could not read animations:enabled" >&2; exit 1; }
+[[ "$enabled" == true || "$enabled" == 1 ]] && enabled=1 || enabled=0
+
+if [[ "$MODE" == status ]]; then
+  [[ "$enabled" == 1 ]] && echo "Animations on" || echo "Animations off"
+  exit 0
+fi
+
+if [[ "$enabled" == 1 ]]; then want=false; STATE="Animations off"
+else                            want=true;  STATE="Animations on"; fi
+
+out=$(hyprctl eval "hl.config({ animations = { enabled = ${want} } }) return 1" 2>&1)
+[[ "$out" == *ok* ]] || { echo "${0##*/}: Hyprland refused: $out" >&2; exit 1; }
+
+case "$MODE" in
+  # The synchronous hint makes a repeated press REPLACE the banner instead of
+  # stacking a new one behind it -- the usual trick for OSD-style toggles.
+  notify) notify-send -e -t 1500 -a toggle-animations \
+            -h string:x-canonical-private-synchronous:toggle-animations "$STATE" ;;
+  print)  printf '%s\n' "$STATE" ;;
+  quiet)  ;;
+esac

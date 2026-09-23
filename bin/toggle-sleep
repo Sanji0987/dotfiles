@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+# Toggle whether this machine is allowed to idle -- a caffeine switch.
+#
+#   -n, --notify   desktop notification (default)
+#   -q, --quiet    change the setting, say nothing
+#   -p, --print    print the new state to stdout instead of notifying
+#   -s, --status   report the current state and change nothing
+#   -h, --help     this text
+#
+# Hyprland port of the gnome branch's script of the same name. That one saves
+# and restores four gsettings keys (idle-delay, the two sleep-inactive-*-type
+# keys, and the screensaver). There is no settings daemon here: idle is entirely
+# hypridle's job, so inhibiting means stopping hypridle and uninhibiting means
+# starting it again.
+#
+# That is simpler than the GNOME version and needs no saved state -- the
+# timeouts live in conf/hypridle.conf and are never modified, so nothing can be
+# left behind if this is interrupted. The trade-off is that it is all-or-
+# nothing: this cannot inhibit suspend while still letting the screen blank.
+
+set -euo pipefail
+
+MODE=notify
+case "${1:-}" in
+  -n|--notify) MODE=notify ;;
+  -q|--quiet)  MODE=quiet ;;
+  -p|--print)  MODE=print ;;
+  -s|--status) MODE=status ;;
+  -h|--help)   sed -n '2,20p' "$0" | sed 's/^# \?//'; exit 0 ;;
+  "")          ;;
+  *)           echo "${0##*/}: unknown option: $1" >&2; exit 2 ;;
+esac
+
+command -v hypridle >/dev/null || {
+  echo "${0##*/}: hypridle not found" >&2; exit 1; }
+
+if [[ "$MODE" == status ]]; then
+  pgrep -x hypridle >/dev/null && echo "Sleep enabled" || echo "Sleep inhibited"
+  exit 0
+fi
+
+if pgrep -x hypridle >/dev/null; then
+  pkill -x hypridle
+  MSG="Staying awake -- idle inhibited"
+else
+  # setsid so it outlives this shell; hypridle re-reads conf/hypridle.conf on
+  # start, so the timeouts are always whatever the config says.
+  setsid hypridle >/dev/null 2>&1 </dev/null &
+  disown
+  sleep 0.4
+  pgrep -x hypridle >/dev/null || { echo "${0##*/}: hypridle failed to start" >&2; exit 1; }
+  MSG="Idle enabled"
+fi
+
+case "$MODE" in
+  # The synchronous hint makes a repeated press REPLACE the banner instead of
+  # stacking a new one behind it -- the usual trick for OSD-style toggles.
+  notify) notify-send -e -t 1500 -a toggle-sleep \
+            -h string:x-canonical-private-synchronous:toggle-sleep "$MSG" ;;
+  print)  printf '%s\n' "$MSG" ;;
+  quiet)  ;;
+esac

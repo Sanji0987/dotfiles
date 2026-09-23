@@ -56,9 +56,12 @@ done
 # edited by claude opus 5
 # dropped the omarchy launcher, CLI shim, walker/kitty/sidra theme syncs and
 # the resync entry point: the shell and its theme pipeline are gone
+# edited by claude opus 5
+# added the three toggles ported from the gnome branch
 for b in hermes update-appimage env env.fish \
          agent-usage-update agent-usage-claude agent-usage-codex \
-         agent-usage-fireworks waybar-claude; do
+         agent-usage-fireworks waybar-claude \
+         toggle-refresh-rate toggle-sleep toggle-animations; do
   link "bin/$b" "$HOME/.local/bin/$b"
 done
 
