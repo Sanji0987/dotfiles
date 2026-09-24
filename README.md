@@ -287,10 +287,31 @@ panel corner. Getting those to show took two changes that fight each other:
   `.workspace-dot { background-color: transparent }`.
 
 `bin/patch-shell-theme` appends a marker-delimited override that drops the
-static icon and gives the dots a visible colour. It sets **colour only** — no
-`min-width`/`min-height`, because GNOME sizes the active dot programmatically
-(it renders as a longer pill), so pinning geometry in CSS would flatten the
-active/inactive distinction instead of styling it.
+static icon, gives the dots a colour, **and a size**.
+
+The size is the part that is easy to get wrong. A gnome-shell user theme
+*replaces* GNOME's stylesheet rather than cascading on top of it, so while
+WhiteSur is active GNOME's own `.workspace-dot` rule — the one carrying
+`min-width`/`min-height` — is never loaded. WhiteSur's only rule sets
+`background-color`. Colour alone therefore leaves the dots at 0×0 and the whole
+button collapses to nothing: an empty panel corner, with no error anywhere.
+
+The colour is solid `#ffffff`, not a translucent white, because the shell
+already fades them itself. From `WorkspaceDot._updateVisuals()` in
+`libshell-18.so`:
+
+```js
+const INACTIVE_WORKSPACE_DOT_SCALE = 0.75;
+opacity: Util.lerp(0.50, 1.00, expansion) * 255,
+scaleX:  Util.lerp(INACTIVE_WORKSPACE_DOT_SCALE, 1.00, expansion),
+```
+
+Inactive dots render at 50% opacity and 0.75 scale; the active one is full
+opacity, full scale, and widened into a pill. Baking alpha into the CSS colour
+gets multiplied by that 0.50 and comes out muddy. It also means **the macOS
+look is native** — that 0.50/0.75 fade is the Launchpad page-dot idiom, so it
+only needed a solid colour and a size to work from. White matches WhiteSur's
+own `#panel { color: white }`, and 7px sits right in its 28px panel.
 
 ```sh
 patch-shell-theme            # apply (idempotent)

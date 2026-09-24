@@ -37,7 +37,11 @@ applied() { grep -qF "$BEGIN" "$CSS"; }
 case "$MODE" in
 status) applied && echo "applied to $theme" || echo "not applied to $theme"; exit 0 ;;
 revert) applied || { echo "  nothing to revert"; exit 0; }
-        sed -i "\#${BEGIN}#,\#${END}#d" "$CSS"
+        # awk with index(), not sed: the markers contain * and /, which sed
+        # would read as regex metacharacters and silently fail to match.
+        awk -v b="$BEGIN" -v e="$END" '
+          index($0,b){s=1} !s{print} s&&index($0,e){s=0}' "$CSS" > "$CSS.tmp"
+        mv "$CSS.tmp" "$CSS"
         echo "  override removed from $theme" ;;
 apply)  applied && { echo "  already applied to $theme"; exit 0; }
         cat >> "$CSS" <<CSSEOF
@@ -47,9 +51,13 @@ $BEGIN
    Undo just that much: drop the icon, let the button size itself again, and
    give the dots a visible colour.
 
-   Colour ONLY -- no min-width, no min-height. GNOME sizes the active dot
-   programmatically (it renders as a longer pill), so setting geometry here
-   would flatten the active/inactive distinction rather than style it. */
+   The geometry matters: a gnome-shell user theme REPLACES GNOME's stylesheet
+   rather than cascading on top of it, so GNOME's own .workspace-dot rule --
+   the one carrying min-width/min-height -- is not loaded at all while
+   WhiteSur is active. WhiteSur's only rule sets background-color alone.
+   Colour alone therefore leaves the dots at 0x0 and the button collapses to
+   nothing. min-width (not width) so the shell can still stretch the active
+   dot into its longer pill. */
 #panel .panel-button#panelActivities {
   background-image: none;
   width: auto;
@@ -67,9 +75,20 @@ $BEGIN
   padding: 0 4px;
 }
 
+/* Solid white, NOT a translucent white. The shell already fades these itself:
+   WorkspaceDot._updateVisuals() lerps opacity 0.50 -> 1.00 and scale 0.75 ->
+   1.00 between inactive and active, then widens the active one into a pill.
+   Baking alpha into the colour here would be multiplied by that 0.50 and the
+   inactive dots would come out muddy. White also matches WhiteSur's own
+   `#panel { color: white }`.
+
+   The 0.50/0.75 fade is the Launchpad page-dot idiom, so the macOS look comes
+   free -- it just needs a solid colour and a size to work from. */
 #panel .panel-button#panelActivities .workspace-dot {
-  background-color: rgba(255, 255, 255, 0.85);
+  background-color: #ffffff;
   border-radius: 999px;
+  min-width: 7px;
+  min-height: 7px;
 }
 $END
 CSSEOF
