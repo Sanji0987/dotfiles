@@ -16,9 +16,9 @@
  * layer with xray, so the wash samples the wallpaper rather than the windows
  * under it.
  *
- * Font: Inter for text with JetBrainsMono Nerd Font behind it for glyphs. The
- * system `monospace` alias is Noto Sans Mono, which has no Nerd Font glyphs,
- * so icons would be tofu under a bare `monospace`.
+ * Font: SF Pro Text, falling back to Inter, with JetBrainsMono Nerd Font last
+ * for glyphs. The system `monospace` alias is Noto Sans Mono, which has no Nerd
+ * Font glyphs, so icons would be tofu under a bare `monospace`.
  */
 
 /* edited by claude opus 5
@@ -36,7 +36,11 @@
 @import "/home/monke/dotfiles/config/themes/current/waybar.css";
 
 * {
-  font-family: "Inter", "JetBrainsMono Nerd Font";
+  /* edited by claude opus 5
+   * SF Pro Text first, Inter behind it. SF Pro is not in this repo -- Apple's
+   * licence forbids redistribution -- so Inter carries the look on a machine
+   * that has not installed it, and the Nerd Font stays last for glyphs. */
+  font-family: "SF Pro Text", "Inter", "JetBrainsMono Nerd Font";
   font-size: 12px;
   min-height: 0;
   /* No rounded anything by default — surfaces opt in below. */

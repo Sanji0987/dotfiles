@@ -34,7 +34,7 @@
  * wildcards breaks the file. This comment has been the cause of two parse
  * errors already. */
 * {
-    font-family: "Inter";
+    font-family: "SF Pro Text", "Inter";
 
     background-color: transparent;
     text-color:       @fg0;
@@ -59,7 +59,7 @@ window {
  * scale 1 it towered over the 12px result rows. The results keep their own
  * size — only this bar changed. */
 inputbar {
-    font:     "Inter 14";
+    font:     "SF Pro Text, Inter 14";
     padding:  14px 16px;
     spacing:  12px;
     children: [ prompt, entry ];

@@ -108,6 +108,43 @@ The two that ship:
 
 Wallpapers are not part of a theme and live in `~/Pictures/Wallpapers/`.
 
+## Fonts
+
+**SF Pro is not in this repo and never will be.** It is Apple's system font.
+Apple gives it away at [developer.apple.com/fonts](https://developer.apple.com/fonts/),
+but the licence permits designing interfaces for Apple platforms — it is not an
+open font licence and it does not permit redistribution.
+
+```sh
+# grab SF-Pro.dmg from developer.apple.com/fonts, then:
+7z x SF-Pro.dmg && 7z x SFProFonts.pkg
+cd SFProFontsPackage.pkg && 7z x Payload && 7z x Payload~
+mkdir -p ~/.local/share/fonts/SF
+cp Library/Fonts/*.otf ~/.local/share/fonts/SF/
+fc-cache -f
+```
+
+Skip it and everything still works: every font name in this repo lists **Inter**
+(SIL OFL, `inter-font`) as the fallback, so the desktop is correct either way and
+most people will not clock the difference.
+
+Which face goes where:
+
+| | |
+|---|---|
+| `SF Pro Text` | all UI — bar, launcher, notifications, OSD, lock screen |
+| `SF Pro Display` | the 190px hyprlock clock only |
+| `JetBrainsMono Nerd Font` | glyphs, always last in the stack |
+
+SF Pro ships in two optical sizes and they are not interchangeable: Text is cut
+for small sizes with looser spacing and larger apertures, Display for large. Inter
+has no optical sizes, so its fallback for the clock is simply a heavier weight.
+
+`config/fontconfig/conf.d/50-ui-sans.conf` points `sans-serif` at SF Pro Text
+then Inter, which covers browsers, Electron and anything that does not name a
+family. Note that XML comments may not contain a double hyphen — one there
+silently drops the whole file and `sans-serif` falls back to Noto Sans.
+
 ## Repos this is pieced together from
 
 Credit where it's due:
